@@ -1,7 +1,9 @@
 ---
-layout: post
-title:  "Ubuntu Core runs Zorp on IoT World"
-date:   2015-05-20 08:09:00
+layout:      post
+title:       Ubuntu Core runs Zorp on IoT World
+date:        2015-05-20 08:09:00
+author:      Balasys Development Team
+image:       https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Logo-ubuntu_no%28r%29-black_orange-hex.svg/320px-Logo-ubuntu_no%28r%29-black_orange-hex.svg.png
 categories:
   - news
 tags:
