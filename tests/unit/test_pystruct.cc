@@ -23,6 +23,7 @@
 
 #include <zorp/zpython.h>
 #include <zorp/policy.h>
+#include <zorp/registry.h>
 #include <zorp/thread.h>
 #include <zorp/sockaddr.h>
 #include <zorp/pysockaddr.h>
@@ -158,6 +159,7 @@ BOOST_AUTO_TEST_CASE(test_pystruct)
   FILE *script;
 
   g_snprintf(policy_file, sizeof(policy_file), "%s/pystruct.py", srcdir ? srcdir : ".");
+  z_registry_init();
   z_thread_init();
 
   BOOST_CHECK_MESSAGE(z_python_init(), "Python initialization failed");

@@ -40,10 +40,10 @@ ZProxy*
 get_proxy_with_policy(const char* policy_source, ZPolicy **new_policy, PyObject **new_proxy_instance, ZClass *proxy_class);
 
 /**
- * After test is finished, it closes python interpreter.
+ * Release the proxy instance and policy created by get_proxy_with_policy()
  */
 void
-leave_zproxy_test();
+release_proxy_and_policy(ZPolicy *policy, PyObject *proxy_instance);
 
 /**
  * Fetch an attribute of the policy proxy instance as a python object with a new reference
@@ -62,6 +62,12 @@ fetch_policy_attribute_as_string(ZPolicy *policy, PyObject *proxy_instance, cons
  */
 gboolean
 fetch_policy_attribute_as_boolean(ZPolicy *policy, PyObject *proxy_instance, const char* attribute_name);
+
+/**
+ * Fetch an attribute of the policy proxy instance, evaluated as an unsigned long long integer
+ */
+guint64
+fetch_policy_attribute_as_uint64(ZPolicy *policy, PyObject *proxy_instance, const char* attribute_name);
 
 /**
  * Call a method of the policy proxy instance without arguments.

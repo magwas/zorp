@@ -37,6 +37,7 @@
 #include <string.h>
 #include <sys/syscall.h>
 
+
 /*
  * The SZIG framework serves as a means to publish internal statistics. It
  * consists of three main parts:
@@ -1940,7 +1941,9 @@ z_szig_handle_command(ZSzigConnection *conn, gchar *cmd_line)
             value = 0;
 
           if (z_log_change_verbose_level(direction, value, &value))
-            g_snprintf(response, sizeof(response), "OK %d\n", value);
+            {
+              g_snprintf(response, sizeof(response), "OK %d\n", value);
+            }
           else
             g_snprintf(response, sizeof(response), "FAIL Error changing verbose level\n");
         }
@@ -1964,7 +1967,9 @@ z_szig_handle_command(ZSzigConnection *conn, gchar *cmd_line)
           if (argv[2])
             {
               if (z_log_change_logspec(argv[2], &logspec))
-                g_snprintf(response, sizeof(response), "OK %s\n", logspec);
+                {
+                  g_snprintf(response, sizeof(response), "OK %s\n", logspec);
+                }
               else
                 g_snprintf(response, sizeof(response), "FAIL Error setting logspec\n");
             }

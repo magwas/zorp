@@ -23,8 +23,15 @@
 void
 init_environment()
 {
+  z_thread_init();
   z_proxy_hash_init();
   z_registry_init();
+
+  if (!z_python_init())
+    {
+      fprintf(stderr, "Python initialization failed\n");
+      exit(1);
+    }
 }
 
 /**
@@ -44,7 +51,8 @@ init_environment()
  *     "class TestProxy(object):\n"
  *     "  def processEvent(self, type, event):\n"
  *     "    self.type = type\n"
- *     "    self.event = event\n";
+ *     "    self.event = event\n"
+ *     "    self.record_id = record_id\n";
  * @endcode
  *
  * If new_policy / new_proxy_instance is NULL, the respective pointer will not be stored.
@@ -54,14 +62,6 @@ get_proxy_with_policy(const char* policy_source, ZPolicy **new_policy, PyObject 
 {
   ZPolicy *policy;
   PyObject *proxy_instance;
-  // Initialize the python interpreter
-
-  z_thread_init();
-  if (!z_python_init())
-    {
-      fprintf(stderr, "Python initialization failed\n");
-      exit(1);
-    }
 
   // Create the main
   policy = z_policy_new("");
@@ -104,10 +104,18 @@ get_proxy_with_policy(const char* policy_source, ZPolicy **new_policy, PyObject 
   return proxy;
 }
 
+/**
+ * Release the proxy instance and policy created by get_proxy_with_policy()
+ *
+ * @param policy Policy object. May be NULL.
+ * @param proxy_instance Proxy instance object. May be NULL.
+ */
 void
-leave_zproxy_test()
+release_proxy_and_policy(ZPolicy *policy, PyObject *proxy_instance)
 {
-  z_python_destroy();
+  z_policy_var_unref(proxy_instance);
+  if (policy)
+    z_policy_unref(policy);
 }
 
 static PyObject*
@@ -173,6 +181,28 @@ fetch_policy_attribute_as_boolean(ZPolicy *policy, PyObject *proxy_instance, con
   z_policy_thread_acquire(policy->main_thread);
   PyObject* temp_obj = fetch_policy_attribute_nolock(proxy_instance, attribute_name);
   result = PyObject_IsTrue(temp_obj);
+  Py_DECREF(temp_obj);
+  z_policy_thread_release(policy->main_thread);
+
+  return result;
+}
+
+/**
+ * Fetch an attribute of the policy proxy instance, evaluated as an unsigend long long integer
+ *
+ * @param policy  The policy object
+ * @param proxy_instance  The policy proxy instance
+ * @param attribute_name  Attribute name of the policy proxy instance
+ * @return The integer representation.
+ */
+guint64
+fetch_policy_attribute_as_uint64(ZPolicy *policy, PyObject *proxy_instance, const char* attribute_name)
+{
+  guint64 result;
+
+  z_policy_thread_acquire(policy->main_thread);
+  PyObject* temp_obj = fetch_policy_attribute_nolock(proxy_instance, attribute_name);
+  result = PyInt_AsUnsignedLongLongMask(temp_obj);
   Py_DECREF(temp_obj);
   z_policy_thread_release(policy->main_thread);
 

@@ -416,23 +416,6 @@ class Proxy(BuiltinProxy):
             </description>
           </attribute>
           <attribute maturity="stable">
-            <name>ssl.client_disable_proto_sslv2</name>
-            <type>
-              <boolean/>
-            </type>
-            <default>TRUE</default>
-            <conftime>
-              <read/>
-              <write/>
-            </conftime>
-            <runtime>
-              <read/>
-            </runtime>
-            <description>
-              Specifies that SSLv2 should be disabled even if the method selection would otherwise support SSLv2.
-            </description>
-          </attribute>
-          <attribute maturity="stable">
             <name>ssl.client_disable_proto_sslv3</name>
             <type>
               <boolean/>
@@ -677,23 +660,6 @@ class Proxy(BuiltinProxy):
             </runtime>
             <description>
               Specifies the SSL/TLS protocols allowed on the server side.
-            </description>
-          </attribute>
-          <attribute maturity="stable">
-            <name>ssl.server_disable_proto_sslv2</name>
-            <type>
-              <boolean/>
-            </type>
-            <default>TRUE</default>
-            <conftime>
-              <read/>
-              <write/>
-            </conftime>
-            <runtime>
-              <read/>
-            </runtime>
-            <description>
-              Specifies that SSLv2 should be disabled even if the method selection would otherwise support SSLv2.
             </description>
           </attribute>
           <attribute maturity="stable">
@@ -1379,8 +1345,10 @@ class Proxy(BuiltinProxy):
             self.encryption = self.session.service.encryption_policy.getEncryption()
         elif self.encryption_policy:
             self.encryption = getEncryptionPolicy(self.encryption_policy).getEncryption()
-        else:
+        elif self.ssl.isEncryptionUsed():
             self.encryption = self.ssl.getEncryption(self)
+        else:
+            self.encryption = Globals.none_encryption
 
 
     def config(self):

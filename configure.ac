@@ -25,7 +25,7 @@ dnl ***************************************************************************
 dnl Dependencies
 
 GLIB_MIN_VERSION="2.32.0"
-ZORPLL_MIN_VERSION="6.0.3.0"
+ZORPLL_MIN_VERSION="6.0.8.0"
 ZORPLIC_MIN_VERSION="6.0.3.0"
 ZORPMISC_MIN_VERSION="6.0.3.0"
 OPENSSL_MIN_VERSION="1.0.1"
@@ -113,6 +113,10 @@ AC_ARG_ENABLE(prefork,
               [  --enable-prefork             Enable prefork],,
 	      enable_prefork=no)
 
+AC_ARG_ENABLE(predictable_random,
+              [  --enable-predictable-random             Enable predictable random],,
+        enable_predictable_random=no)
+
 AC_ARG_WITH(pidfiledir,
               [  --with-pidfiledir=[path]   Path to run directory where pidfile is stored],
               pidfiledir="$with_pidfiledir",
@@ -122,6 +126,7 @@ ZORP_MUNIN_CONF_DIR="${sysconfdir}/munin/plugin-conf.d"
 ZORP_NAGIOS_CONF_DIR="${sysconfdir}/nagios/nrpe.d"
 ZORP_SUDOERSD_CONF_DIR="${sysconfdir}/sudoers.d"
 sysconfdir="${sysconfdir}/zorp"
+#datadir='${prefix}/share/zorp'
 libdir='${prefix}/lib'
 
 dnl ***************************************************************************
@@ -174,7 +179,7 @@ dnl ***************************************************************************
 dnl Checks for header files.
 
 
-AC_CHECK_HEADERS(sys/capability.h sys/prctl.h sys/syscall.h limits.h)
+AC_CHECK_HEADERS(sys/capability.h sys/prctl.h sys/syscall.h limits.h stdbool.h stdint.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_CACHE_CHECK(for MSG_PROXY, blb_cv_msg_proxy,
@@ -258,7 +263,7 @@ PKG_CHECK_MODULES(PYTHON, python-2.7 < $PYTHON_MAX_VERSION,,
 
 
 
-AM_CONDITIONAL(ALERTING_ENABLED, test x$enable_alerting = xyes)
+
 
 if test "x$ac_cv_func_gethostbyname_r" = "xyes"; then
 dnl	if test "`uname -s`" = "Linux"; then
@@ -320,7 +325,7 @@ zorpeval()
 }
 
 ZORP_MUNIN_DIR="${prefix}/share/munin/plugins"
-ZORP_NAGIOS_DIR="${libdir}/nagios/plugins"
+ZORP_NAGIOS_DIR="${prefix}/lib/nagios/plugins"
 ZORP_PYTHON_DIR="${pythondir}/Zorp"
 ZORPCTL_PYTHON_DIR="${pythondir}/zorpctl"
 
@@ -396,7 +401,7 @@ DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $PYTHON
 CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS"
 # common libraries (dependencies)
 LIBPROXY_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
-MODULES_CPPFLAGS="$LIBPROXY_CPPFLAGS"
+MODULES_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
 
 # Dependencies outside the source tree
 DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $PYTHON_LIBS $PYTHON_DEPS $COREDUMP_LIBS $OPENSSL_LIBS"
@@ -415,6 +420,10 @@ dnl Coverage flags and libs
 if test "x$enable_coverage" = "xyes"; then
         LDFLAGS="$LDFLAGS -fprofile-arcs -lgcov"
         CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+fi
+
+if test "x$enable_predictable_random" = "xyes"; then
+        AC_DEFINE(PREDICTABLE_RANDOM_ENABLED, 1, [Predictable random is enabled])
 fi
 
 AC_SUBST(DEPS_CPPFLAGS)
@@ -464,8 +473,6 @@ License: $ZORP_PACKAGE_LICENSE
 
 EOF
 
-AC_CONFIG_COMMANDS([runtest-exe], [chmod +x tests/python/runtest.sh])
-
 AC_SUBST(LIBZORP_LT_RELEASE)
 AC_SUBST(LIBZORP_LT_COMPAT_BRANCH)
 AC_SUBST(LIBZORP_LT_COMPAT_PL)
@@ -478,6 +485,8 @@ AC_SUBST(OPENSSL_MIN_VERSION)
 AC_SUBST(PYTHON_MIN_VERSION)
 AC_SUBST(CURRDATE)
 AC_SUBST(pidfiledir)
+
+AC_CONFIG_LINKS([pylib/Zorp/__init__.py:pylib/Zorp/__init__.py])
 
 AC_CONFIG_FILES(
 Makefile
@@ -517,7 +526,6 @@ pylib/Zorp/Config.py
 pylib/Zorp/Makefile
 scripts/Makefile
 tests/Makefile
-tests/python/runtest.sh
 tests/python/Makefile
 tests/tools/Makefile
 tests/unit/Makefile

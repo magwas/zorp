@@ -91,7 +91,7 @@ ftp_connect_server_event(FtpProxy *self, gchar *hostname, guint port)
   z_inet_ntoa(tmpip, sizeof(tmpip), ((struct sockaddr_in *) &client_local->sa)->sin_addr);
   self->server_port = ntohs(((struct sockaddr_in *) &client_local->sa)->sin_port);
   if (self->data_port_min && self->data_port_max)
-    self->data_local_buf[EP_CLIENT] = z_sockaddr_inet_range_new(tmpip, self->data_port_min, self->data_port_max);
+    self->data_local_buf[EP_CLIENT] = z_sockaddr_inet_range_new_random(tmpip, self->data_port_min, self->data_port_max);
   else
     self->data_local_buf[EP_CLIENT] = z_sockaddr_inet_new(tmpip, 0);
 

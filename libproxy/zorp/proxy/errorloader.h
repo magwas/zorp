@@ -38,6 +38,6 @@ typedef struct _ZErrorLoaderVarInfo
 } ZErrorLoaderVarInfo;
 
 gchar *
-z_error_loader_format_file(gchar *filepath, gchar *additional_info, guint32 flags, ZErrorLoaderVarInfo *infos, gpointer user_data);
+z_error_loader_format_file(const gchar *filepath, gchar *additional_info, guint32 flags, ZErrorLoaderVarInfo *infos, gpointer user_data);
 
 #endif

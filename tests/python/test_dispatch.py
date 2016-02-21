@@ -22,7 +22,7 @@
 ############################################################################
 
 from Zorp.Core import *
-from Zorp.Plug import *
+from Zorp.Proxy import Proxy
 from Zorp.Zorp import quit
 
 import unittest
@@ -32,7 +32,7 @@ config.options.kzorp_enabled = FALSE
 class TestDispatcher(unittest.TestCase):
 
     def setUp(self):
-        Service('test', PlugProxy)
+        Service('test', Proxy)
 
     def tearDown(self):
         import Zorp.Globals

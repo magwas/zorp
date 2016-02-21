@@ -217,12 +217,16 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name,
         {
           usr1_received = 0;
           z_log_change_verbose_level(1, 1, &new_verbosity);
+
+
           z_mem_trace_stats();
         }
       if (usr2_received)
         {
           usr2_received = 0;
           z_log_change_verbose_level(-1, 1, &new_verbosity);
+
+
         }
       if (hup_received)
 	{

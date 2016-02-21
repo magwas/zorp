@@ -1,7 +1,7 @@
 # vim: sts=4 ts=4 noet ai
 
 pkgdatadir = @ZORP_PYTHON_DIR@
-pkglibdir = @zorp_libdir@
+pkglibdir = @libdir@/zorp
 LIBS = @MODULES_LIBS@
 CPPFLAGS = @MODULES_CPPFLAGS@
 
