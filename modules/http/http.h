@@ -480,6 +480,10 @@ struct _HttpProxy
   /* Enable authentication cache based on Cookies. */
   gboolean auth_by_cookie;
 
+  /* Enable authentication based on html form (captive portal). */
+  gboolean auth_by_form;
+  GString *login_page_path;
+
   /* Do not authenticate this amount of sec. */
   gint auth_cache_time;
 
@@ -546,6 +550,8 @@ gboolean http_format_url(HttpURL *url, GString *encode_buf, gboolean format_abso
                          gboolean canonicalized, const gchar **reason);
 void http_init_url(HttpURL *url);
 void http_destroy_url(HttpURL *url);
+
+gboolean http_string_assign_url_decode(GString *part, gboolean permit_invalid_hex_escape, const gchar *src, gint len, const gchar **reason);
 
 /* request/response processing */
 

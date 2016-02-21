@@ -22,7 +22,7 @@
 ############################################################################
 
 from Zorp.Core import *
-from Zorp.Plug import *
+from Zorp.Proxy import Proxy
 from Zorp.Session import MasterSession
 from Zorp.NAT import getNATPolicy, NAT_SNAT, NAT_DNAT
 from Zorp.Exceptions import UserException
@@ -42,7 +42,7 @@ class TestGeneralNAT(unittest.TestCase):
 
     def setUp(self):
         """Construct a fake session object."""
-        self.session = MasterSession(Service("service1", PlugProxy), None, None, DBSockAddr(SockAddrInet('127.0.0.1', 1234), ZD_PROTO_TCP), None, instance_id=1)
+        self.session = MasterSession(Service("service1", Proxy), None, None, DBSockAddr(SockAddrInet('127.0.0.1', 1234), ZD_PROTO_TCP), None, instance_id=1)
 
     def performTranslation(self, nat_policy_name, addresses, nat_type):
         nat = getNATPolicy(nat_policy_name)
@@ -117,7 +117,7 @@ class TestNAT6446(unittest.TestCase):
 
     def setUp(self):
         """Construct a fake session object."""
-        self.session = MasterSession(Service("service1", PlugProxy), None, None, DBSockAddr(SockAddrInet('127.0.0.1', 1234), ZD_PROTO_TCP), None, instance_id=1)
+        self.session = MasterSession(Service("service1", Proxy), None, None, DBSockAddr(SockAddrInet('127.0.0.1', 1234), ZD_PROTO_TCP), None, instance_id=1)
 
     def performTranslation(self, nat_policy_name, addresses, nat_type):
         nat = getNATPolicy(nat_policy_name)

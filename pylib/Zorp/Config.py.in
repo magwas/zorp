@@ -77,9 +77,6 @@ config.blob.noswap_max = 16384
 
 addConfigContainer('audit')
 
-# Whether each session has a separate audit trail file.
-config.audit.per_session = FALSE
-
 ## Session level options, controlling what to do when auditing is enabled
 ## for a session.
 
@@ -167,12 +164,6 @@ config.audit.ids_src_mac = ""
 config.audit.ids_dst_mac = ""
 
 ## Misc parameters
-
-# Audit trail files are reopened (and a new one started) when they reach this number
-config.audit.reopen_size_threshold = 2000000000L
-
-# Audit trail files are reopened after this amount of time has elapsed
-config.audit.reopen_time_threshold = 28800
 
 # Rate of filling the bucket in byte/sec
 config.audit.rate_limit = 2*1024*1024

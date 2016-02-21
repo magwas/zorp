@@ -348,7 +348,9 @@ class BaseDispatch(object):
                                     client_listen=client_listen,
                                     client_address=client_address)
         if not session:
-            raise DACException, "No applicable service found"
+            verdict = ConnectionVerdict(ConnectionVerdict.DENIED_BY_POLICY)
+            stream.close()
+            return None
 
         stream.name = session.session_id
 
@@ -651,7 +653,7 @@ class Dispatcher(BaseDispatch):
           </metainfo>
         </method>
         """
-        return MasterSession(self.service, client_stream, client_local, client_listen, client_address)
+        return MasterSession(self.service, client_stream, client_local, client_listen, client_address, instance_id=getInstanceId(self.service.name))
 
 class ZoneDispatcher(Dispatcher):
     """
@@ -768,7 +770,7 @@ class ZoneDispatcher(Dispatcher):
             ##
             log(None, CORE_POLICY, 2, "No applicable service found for this client zone (cached); bindto='%s', client_zone='%s'", (self.bindto, client_zone))
         elif cached:
-            return cached
+            return MasterSession(cached, client_stream, client_local, client_listen, client_address, client_zone = client_zone, instance_id=getInstanceId(cached.name))
 
         src_hierarchy = {}
         if self.follow_parent:
@@ -798,7 +800,7 @@ class ZoneDispatcher(Dispatcher):
                 best_src_level = src_level
 
         service = None
-        if best_src_level < max_level:
+        if best is not None and best_src_level < max_level:
             try:
                 service = Globals.services[best]
             except KeyError:
@@ -813,8 +815,11 @@ class ZoneDispatcher(Dispatcher):
             ##
             log(None, CORE_POLICY, 2, "No applicable service found for this client zone; bindto='%s', client_zone='%s'", (self.bindto, client_zone))
 
+        if service is None:
+            return None
+
         self.cache.store(cache_ndx, service)
-        return MasterSession(service, client_stream, client_local, client_listen, client_address, client_zone = client_zone)
+        return MasterSession(service, client_stream, client_local, client_listen, client_address, client_zone = client_zone, instance_id=getInstanceId(service.name))
 
 class CSZoneDispatcher(Dispatcher):
     """
@@ -964,7 +969,7 @@ class CSZoneDispatcher(Dispatcher):
             ##
             log(None, CORE_POLICY, 2, "No applicable service found for this client & server zone (cached); bindto='%s', client_zone='%s', server_zone='%s'", (self.bindto, client_zone, dest_zone))
         elif cached:
-            return cached
+            return MasterSession(cached, client_stream, client_local, client_listen, client_address, client_zone = client_zone, instance_id=getInstanceId(cached.name))
 
         src_hierarchy = {}
         dst_hierarchy = {}
@@ -1009,7 +1014,7 @@ class CSZoneDispatcher(Dispatcher):
                 best_dst_level = dst_level
 
         service = None
-        if best_src_level < max_level and best_dst_level < max_level:
+        if best is not None and best_src_level < max_level and best_dst_level < max_level:
             try:
                 service = Globals.services[best]
             except KeyError:
@@ -1021,9 +1026,13 @@ class CSZoneDispatcher(Dispatcher):
             # @see: Listener.CSZoneListener
             # @see: Receiver.CSZoneReceiver
             ##
-            log(None, CORE_POLICY, 2, "No applicable service found for this client & server zone; bindto='%s', client_zone='%s', server_zone='%s'", (self.bindto, session.client_zone, dest_zone))
+            log(None, CORE_POLICY, 2, "No applicable service found for this client & server zone; bindto='%s', client_zone='%s', server_zone='%s'", (self.bindto, client_zone, dest_zone))
+
+        if service is None:
+            return None
+
         self.cache.store(cache_ndx, service)
-        return MasterSession(service, client_stream, client_local, client_listen, client_address, client_zone = client_zone)
+        return MasterSession(service, client_stream, client_local, client_listen, client_address, client_zone = client_zone, instance_id=getInstanceId(service.name))
 
 
 def purgeDispatches():

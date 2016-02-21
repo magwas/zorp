@@ -107,7 +107,7 @@ http_string_url_decode_hex_byte(guchar *dst, const gchar *src, const gchar **rea
  * single byte destination encoding, e.g. US-ASCII with the 128-255 range
  * defined.
  **/
-static gboolean
+gboolean
 http_string_assign_url_decode(GString *part, gboolean permit_invalid_hex_escape, const gchar *src, gint len, const gchar **reason)
 {
   gchar *dst;

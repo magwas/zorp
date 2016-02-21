@@ -163,8 +163,9 @@ class StartAlgorithm(ProcessAlgorithm):
 
     def start(self):
         args = self.assembleStartCommand()
+        environment = None
         try:
-            subprocess.Popen(args, stderr=open("/dev/null", 'w'))
+            subprocess.Popen(args, env=environment, stderr=open("/dev/null", 'w'))
         except OSError:
             pass
         self.waitTilTimoutToStart()

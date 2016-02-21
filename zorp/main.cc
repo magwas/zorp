@@ -42,6 +42,8 @@
 
 #include <zorp/proxy.h>
 
+#include <openssl/rand.h>
+
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <signal.h>
@@ -63,6 +65,12 @@
 #endif
 
 #include <sys/termios.h>
+
+#ifdef PREDICTABLE_RANDOM_ENABLED
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#endif
 
 #include "logtags_gperf.c"
 
@@ -265,6 +273,60 @@ static GOptionEntry zorp_options[] =
   { NULL,             0,                     0, G_OPTION_ARG_NONE,   NULL,                  NULL, NULL }
 };
 
+typedef enum
+  {
+    COMM_PHASE_NONE = 0,
+    COMM_PHASE_CONNECT,
+    COMM_PHASE_READ,
+    COMM_PHASE_MAX
+  } ZDeadlockCommPhase;
+
+static const char* z_deadlock_comm_phase_names[COMM_PHASE_MAX + 1] =
+  {
+    [COMM_PHASE_NONE] = NULL,
+    [COMM_PHASE_CONNECT] = "connect",
+    [COMM_PHASE_READ] = "read",
+    [COMM_PHASE_MAX] = NULL
+  };
+
+static const char*
+z_deadlock_comm_phase_name(ZDeadlockCommPhase phase)
+{
+  if (z_deadlock_comm_phase_names[phase])
+    return z_deadlock_comm_phase_names[phase];
+  else
+    return "unknown";
+}
+
+static gboolean
+z_is_deadlock_szig_error_ignored(ZDeadlockCommPhase phase, int errnum)
+{
+  gboolean result;
+
+  switch (phase)
+    {
+    case COMM_PHASE_CONNECT:
+      result = (errnum == ECONNREFUSED);
+      break;
+
+    case COMM_PHASE_READ:
+      result = (errnum == ECONNRESET);
+      break;
+
+    default:
+      result = FALSE;
+      break;
+    }
+
+  if (result)
+    {
+      z_process_message("Ignoring error during SZIG communication; phase='%s', reason='%s'",
+                        z_deadlock_comm_phase_name(phase), strerror(errnum));
+    }
+
+  return result;
+}
+
 static gboolean
 zorp_deadlock_checker(void)
 {
@@ -279,7 +341,7 @@ zorp_deadlock_checker(void)
   fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (fd == -1)
     {
-      z_process_message("Cannot create socket; reason='%s'\n", strerror(errno));
+      z_process_message("Cannot create socket; reason='%s'", strerror(errno));
       goto finish;
     }
 
@@ -287,13 +349,17 @@ zorp_deadlock_checker(void)
   snprintf(unaddr.sun_path, sizeof(unaddr.sun_path), "%s.%s", ZORP_SZIG_SOCKET_NAME, virtual_instance_name);
   if (connect(fd, (struct sockaddr *) &unaddr, sizeof(unaddr)) < 0)
     {
-      z_process_message("Cannot connect to SZIG socket; socket='%s', reason='%s'\n", unaddr.sun_path, strerror(errno));
+      int errnum = errno;
+      res = z_is_deadlock_szig_error_ignored(COMM_PHASE_CONNECT, errnum);
+      if (!res)
+        z_process_message("Cannot connect to SZIG socket; socket='%s', reason='%s'", unaddr.sun_path, strerror(errnum));
+
       goto finish;
     }
 
   if (write(fd, request, strlen(request)) < 0)
     {
-      z_process_message("Error sending request to SZIG socket; reason='%s'\n", strerror(errno));
+      z_process_message("Error sending request to SZIG socket; reason='%s'", strerror(errno));
       goto finish;
     }
 
@@ -305,14 +371,14 @@ zorp_deadlock_checker(void)
   switch (len)
     {
     case 0: /* ok, but no data available within the timeout */
-      z_process_message("Timeout expired while reading SZIG response;\n");
+      z_process_message("Timeout expired while waiting for SZIG response;");
       goto finish;
 
     case 1: /* ok, data is available for reading */
       break;
 
     case -1: /* error, reason comes in errno */
-      z_process_message("Error reading SZIG response; reason='%s'\n", strerror(errno));
+      z_process_message("Error waiting for SZIG response; reason='%s'", strerror(errno));
       goto finish;
 
     default: /* this just can't happen */
@@ -322,7 +388,11 @@ zorp_deadlock_checker(void)
 
   if ((len = read(fd, response, sizeof(response) - 1)) < 0)
     {
-      z_process_message("Error reading SZIG response; reason='%s'\n", strerror(errno));
+      int errnum = errno;
+      res = z_is_deadlock_szig_error_ignored(COMM_PHASE_READ, errnum);
+      if (!res)
+        z_process_message("Error reading SZIG response; reason='%s'", strerror(errnum));
+
       goto finish;
     }
 
@@ -338,6 +408,52 @@ finish:
 
   return res;
 }
+
+#ifdef PREDICTABLE_RANDOM_ENABLED
+
+// These don't need to do anything if you don't have anything for them to do.
+static void stdlib_rand_cleanup() {}
+static void stdlib_rand_add(const void *buf, int num, double add_entropy)
+{
+  (void) buf;
+  (void) num;
+  (void) add_entropy;
+}
+static int stdlib_rand_status() { return 1; }
+
+// Seed the RNG.  srand() takes an unsigned int, so we just use the first
+// sizeof(unsigned int) bytes in the buffer to seed the RNG.
+static void stdlib_rand_seed(const void *buf, int num)
+{
+  assert(num >= (int)sizeof(unsigned int));
+  srand(*((unsigned int *) buf));
+}
+
+// Fill the buffer with the same values, so the random function will return always the same.
+// This is needed to replay the same connection multiple times.
+static int stdlib_rand_bytes(unsigned char *buf, int num)
+{
+  for(int index = 0; index < num; ++index)
+    {
+      buf[index] = 10;
+    }
+  return 1;
+}
+
+// Create the table that will link OpenSSL's rand API to our functions.
+RAND_METHOD stdlib_rand_meth = {
+  stdlib_rand_seed,
+  stdlib_rand_bytes,
+  stdlib_rand_cleanup,
+  stdlib_rand_add,
+  stdlib_rand_bytes,
+  stdlib_rand_status
+};
+
+// This is a public-scope accessor method for our table.
+RAND_METHOD *RAND_stdlib() { return &stdlib_rand_meth; }
+
+#endif
 
 int
 main(int argc, char *argv[])
@@ -478,6 +594,13 @@ main(int argc, char *argv[])
 
   z_setup_signals();
 
+
+#ifdef PREDICTABLE_RANDOM_ENABLED
+  RAND_set_rand_method(RAND_stdlib());
+  unsigned int seed = 0x12345;
+  RAND_seed(&seed, sizeof(seed));
+#endif
+
   /*NOLOG*/
   z_main_loop(policy_file, instance_name, instance_policy_list, virtual_instance_name, zorp_process_master_mode);
 
@@ -504,6 +627,8 @@ main(int argc, char *argv[])
   /* avoid second dump of dmalloc */
   rename("logfile", "logfile.dm");
 #endif
+
+
   if (exit_code != 0)
     z_process_startup_failed(exit_code, TRUE);
   z_process_finish();

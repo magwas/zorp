@@ -43,6 +43,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <memory>
+
 #include <netdb.h>
 static GHashTable *auth_hash = NULL;
 G_LOCK_DEFINE_STATIC(auth_mutex);
@@ -50,8 +52,8 @@ G_LOCK_DEFINE_STATIC(auth_mutex);
 typedef struct _ZorpAuthInfo
 {
   time_t last_auth_time;
-  time_t accept_credit;
-  time_t create_time;
+  time_t accept_credit_until;
+  time_t created_at;
 } ZorpAuthInfo;
 
 
@@ -188,6 +190,8 @@ http_config_set_defaults(HttpProxy *self)
   self->auth_realm = g_string_new("Zorp HTTP auth");
   self->old_auth_header = g_string_sized_new(0);
   self->auth_by_cookie = FALSE;
+  self->auth_by_form = FALSE;
+  self->login_page_path = g_string_sized_new(0);
 
 
   self->request_categories = NULL;
@@ -808,6 +812,14 @@ http_register_vars(HttpProxy *self)
                   Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
                   &self->auth_by_cookie);
 
+  z_proxy_var_new(&self->super, "auth_by_form",
+                  Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
+                  &self->auth_by_form);
+
+  z_proxy_var_new(&self->super, "login_page_path",
+                  Z_VAR_TYPE_STRING | Z_VAR_GET | Z_VAR_SET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
+                  self->login_page_path);
+
   z_proxy_var_new(&self->super, "auth_cache_time",
                   Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
                   &self->auth_cache_time);
@@ -822,6 +834,18 @@ http_register_vars(HttpProxy *self)
                   &self->request_categories);
 
   z_proxy_return(self);
+}
+
+static std::string
+http_error_file_path(HttpProxy *self, const std::string &filename)
+{
+  std::string file_path;
+  if (self->error_files_directory->len)
+    file_path = std::string(self->error_files_directory->str) + "/" + filename;
+  else
+    file_path = ZORP_DATADIR "/http/" + std::string(self->super.language->str) + "/" + filename;
+
+  return file_path;
 }
 
 /**
@@ -855,7 +879,7 @@ http_error_message(HttpProxy *self, gint response_code, guint message_code, GStr
       "ftperror.html",
       "redirect.html"
     };
-  gchar response[256], filename[256];
+  gchar response[256];
   gchar *error_msg;
 
   z_proxy_enter(self);
@@ -906,10 +930,7 @@ http_error_message(HttpProxy *self, gint response_code, guint message_code, GStr
   if ((self->request_flags & HTTP_REQ_FLG_HEAD))
     z_proxy_return(self, TRUE); /* we are responding to a HEAD request, do not return a body */
 
-  if (self->error_files_directory->len)
-    g_snprintf(filename, sizeof(filename), "%s/%s", self->error_files_directory->str, messages[message_code]);
-  else
-    g_snprintf(filename, sizeof(filename), ZORP_DATADIR "/http/" "%s/%s", self->super.language->str, messages[message_code]);
+  std::string filename = http_error_file_path(self, messages[message_code]);
 
   if (self->error_silent)
     {
@@ -918,7 +939,7 @@ http_error_message(HttpProxy *self, gint response_code, guint message_code, GStr
         the browser, if silent mode would not be enabled. It is likely that
         some protocol/configuration/proxy error occurred.
       */
-      z_proxy_log(self, HTTP_DEBUG, 6, "An error occurred, would serve error file, but silent mode is enabled; filename='%s'", filename);
+      z_proxy_log(self, HTTP_DEBUG, 6, "An error occurred, would serve error file, but silent mode is enabled; filename='%s'", filename.c_str());
       z_proxy_return(self, FALSE);
     }
 
@@ -927,8 +948,8 @@ http_error_message(HttpProxy *self, gint response_code, guint message_code, GStr
     clients browser. It is likely that some protocol/configuration/proxy
     error occurred.
   */
-  z_proxy_log(self, HTTP_DEBUG, 6, "An error occurred, serving error file; filename='%s'", filename);
-  error_msg = z_error_loader_format_file(filename, infomsg->str, Z_EF_ESCAPE_HTML, NULL, NULL);
+  z_proxy_log(self, HTTP_DEBUG, 6, "An error occurred, serving error file; filename='%s'", filename.c_str());
+  error_msg = z_error_loader_format_file(filename.c_str(), infomsg->str, Z_EF_ESCAPE_HTML, NULL, NULL);
 
   if (error_msg)
     {
@@ -1142,6 +1163,33 @@ http_process_base64(gchar *dst, guint dstlen, gchar *src, guint srclen)
   z_return(TRUE);
 }
 
+static bool
+http_do_authenticate(HttpProxy *self, ZorpAuthInfo *auth_info, const std::string &username, const std::string &password)
+{
+  gchar **groups = NULL;
+
+  z_policy_lock(self->super.thread);
+  bool res = z_auth_provider_check_passwd(self->auth, self->super.session_id, const_cast<gchar*>(username.c_str()), const_cast<gchar *>(password.c_str()), &groups, &self->super);
+  z_policy_unlock(self->super.thread);
+
+  if (res)
+    {
+      res = z_proxy_user_authenticated_default(&self->super, username.c_str(), (gchar const **) groups);
+      G_LOCK(auth_mutex);
+
+      if (self->auth_cache_time > 0)
+        {
+          auth_info->last_auth_time = time(NULL);
+        }
+
+      G_UNLOCK(auth_mutex);
+    }
+
+  g_strfreev(groups);
+
+  return res;
+}
+
 /* FIXME: optimize header processing a bit (no need to copy hdr into a
    buffer) */
 static gboolean
@@ -1188,29 +1236,11 @@ http_process_auth_info(HttpProxy *self, HttpHeader *h, ZorpAuthInfo *auth_info)
 
   if (up)
     {
-      gboolean res;
-      gchar **groups = NULL;
-
-      z_policy_lock(self->super.thread);
-      res = z_auth_provider_check_passwd(self->auth, self->super.session_id, up[0], up[1], &groups, &self->super);
-      z_policy_unlock(self->super.thread);
-
+      bool res = http_do_authenticate(self, auth_info, up[0], up[1]);
       if (res)
-        {
-          res = z_proxy_user_authenticated_default(&self->super, up[0], (gchar const **) groups);
-          g_string_assign(self->old_auth_header, h->value->str);
-          G_LOCK(auth_mutex);
-
-          if (self->auth_cache_time > 0)
-            {
-              auth_info->last_auth_time = time(NULL);
-            }
-
-          G_UNLOCK(auth_mutex);
-        }
+        g_string_assign(self->old_auth_header, h->value->str);
 
       g_strfreev(up);
-      g_strfreev(groups);
       z_proxy_return(self, res);
     }
 
@@ -1322,6 +1352,129 @@ http_format_early_request(HttpProxy *self, gboolean stacked, GString *preamble)
     g_string_assign(preamble, "");
 
   return TRUE;
+}
+
+static bool
+http_form_auth_get_value(const std::string &stream_line, const std::string &key, std::string &value)
+{
+  size_t value_pos = stream_line.find(key);
+  if (value_pos == std::string::npos)
+    return false;
+  value_pos += key.length();
+  value = "";
+  for (size_t i = value_pos; i != stream_line.length() && stream_line[i] != '&'; i++)
+    value += stream_line[i];
+
+  return true;
+}
+
+static bool
+http_form_auth_get_username_password_redirect(const std::string &stream_line, std::string &username, std::string &password, std::string &redirect_location)
+{
+  if (!http_form_auth_get_value(stream_line, "username=", username) ||
+      !http_form_auth_get_value(stream_line, "password=", password))
+    return false;
+
+  if (http_form_auth_get_value(stream_line, "redirect_location=", redirect_location))
+    {
+      const gchar *reason;
+      GString *decoded = g_string_new("");
+      if (http_string_assign_url_decode(decoded, true, redirect_location.c_str(), redirect_location.length(), &reason))
+        {
+          redirect_location = decoded->str;
+        }
+      g_string_free(decoded, true);
+    }
+
+  return true;
+}
+
+static std::string
+http_form_auth_get_first_post_line(HttpProxy *self)
+{
+  std::string post_line;
+
+  std::unique_ptr<ZBlob, std::function<void(ZBlob*)>> blob(
+    z_blob_new(nullptr, 0),
+    std::bind(&z_blob_unref, std::placeholders::_1)
+  );
+  if (!blob)
+    return post_line;
+
+  std::string session_id = std::string(self->super.session_id) + "/post";
+  std::unique_ptr<ZStream, std::function<void(ZStream*)>> blob_stream(
+    z_stream_blob_new(blob.get(), session_id.c_str()),
+    std::bind(&z_stream_unref, std::placeholders::_1)
+  );
+  blob_stream->timeout = -1;
+  if (!http_data_transfer(self, HTTP_TRANSFER_TO_BLOB, EP_CLIENT, self->super.endpoints[EP_CLIENT], EP_SERVER, blob_stream.get(), false, false, http_format_early_request))
+    {
+      return post_line;
+    }
+
+  std::unique_ptr<ZStream, std::function<void(ZStream*)>> stream_line(
+    z_stream_push(z_stream_blob_new(blob.get(), session_id.c_str()), z_stream_line_new(nullptr, self->max_line_length, ZRL_EOL_CRLF | ZRL_PARTIAL_READ)),
+    [] (ZStream *stream) {
+      ZStream *tmpstream = z_stream_pop(stream);
+      z_stream_unref(tmpstream);
+    }
+  );
+
+  gchar *line;
+  gsize line_length;
+  bool res = z_stream_line_get(stream_line.get(), &line, &line_length, nullptr);
+  if (line_length == 0)
+    return post_line;
+
+  post_line = std::string(line).substr(0, line_length);
+
+  return post_line;
+}
+
+static void
+http_form_auth_set_answer(HttpProxy *self, const std::string &redirect_location)
+{
+  if (redirect_location.empty())
+    {
+      self->error_code = HTTP_MSG_OK;
+      self->error_status = 200;
+      g_string_assign(self->custom_response_body, "You are now authorized.");
+    }
+  else
+    {
+      self->error_code = HTTP_MSG_REDIRECT;
+      self->error_status = 301;
+      g_string_sprintfa(self->error_headers, "Location: %s\r\n", redirect_location.c_str());
+    }
+  self->send_custom_response = TRUE;
+}
+
+static bool
+http_get_form_auth(HttpProxy *self, ZorpAuthInfo *auth_info, std::string &redirect_location)
+{
+  HttpHeader *header;
+
+  if (!http_lookup_header(&self->headers[EP_CLIENT], "Transfer-Encoding", &header) &&
+      !http_lookup_header(&self->headers[EP_CLIENT], "Content-Length", &header))
+    {
+      return false;
+    }
+
+  std::string post_line = http_form_auth_get_first_post_line(self);
+  if (post_line.empty())
+    return false;
+
+  std::string username, password;
+  if (!http_form_auth_get_username_password_redirect(post_line, username, password, redirect_location))
+    return false;
+
+  bool res = http_do_authenticate(self, auth_info, username, password);
+  if (res)
+    {
+      http_form_auth_set_answer(self, redirect_location);
+    }
+
+  z_proxy_return(self, res);
 }
 
 static gboolean
@@ -1436,7 +1589,7 @@ static gboolean
 http_remove_old_auth(gpointer key G_GNUC_UNUSED, gpointer value, gpointer user_data)
 {
   ZorpAuthInfo *real_value = (ZorpAuthInfo *)value;
-  time_t max_time = MAX(MAX(real_value->last_auth_time, real_value->accept_credit), real_value->create_time);
+  time_t max_time = MAX(MAX(real_value->last_auth_time, real_value->accept_credit_until), real_value->created_at);
   time_t cut_time = GPOINTER_TO_UINT(user_data);
 
   return max_time < cut_time;
@@ -1645,6 +1798,38 @@ http_process_connection_header_tokens(HttpHeaders *headers, HttpHeader *conn_hdr
   http_iterate_connection_header_tokens(headers, conn_hdr);
 }
 
+static void
+http_form_auth_replace_redirect_location(HttpProxy *self, std::string &html_form, const std::string &redirect_location)
+{
+  std::string search_string {"\"redirect_location\" value=\"\""};
+  std::size_t found = html_form.find(search_string);
+  if (found != std::string::npos)
+    {
+      std::string request_url = redirect_location;
+      if (request_url.empty())
+        request_url = self->super.tls_opts.ssl_sessions[EP_CLIENT] ? std::string("https") : std::string("http") + std::string("://") + std::string(self->remote_server->str) + std::string(self->request_url->str);
+      html_form.insert(found+search_string.length()-1, request_url);
+    }
+}
+
+static void
+http_auth_update_accept_credit_until(HttpProxy *self, ZorpAuthInfo *auth_info, const time_t &now)
+{
+  G_LOCK(auth_mutex);
+
+  if (self->max_auth_time > 0)
+    auth_info->accept_credit_until = now + self->max_auth_time;
+
+  G_UNLOCK(auth_mutex);
+}
+
+static void
+http_set_response(HttpProxy *self, int error_code, unsigned int error_status)
+{
+  self->error_code = error_code;
+  self->error_status = error_status;
+}
+
 static gboolean
 http_process_request(HttpProxy *self)
 {
@@ -1672,6 +1857,11 @@ http_process_request(HttpProxy *self)
   else
     self->connection_mode = HTTP_CONNECTION_CLOSE;
 
+  if (http_lookup_header(&self->headers[EP_CLIENT], "Host", &h))
+    g_string_assign(self->remote_server, h->value->str);
+  else
+    g_string_truncate(self->remote_server, 0);
+
   if (self->auth)
     {
       if (self->proto_version[EP_CLIENT] >= 0x0100)
@@ -1681,7 +1871,7 @@ http_process_request(HttpProxy *self)
           time_t now = time(NULL);
           gchar buf[4096];
 
-          if (self->auth_by_cookie)
+          if (self->auth_by_cookie || self->auth_by_form)
             {
               if (!http_get_client_info(self, client_key, sizeof(client_key)))
                 g_assert_not_reached();
@@ -1708,11 +1898,12 @@ http_process_request(HttpProxy *self)
           if (auth_info == NULL)
             {
               auth_info = g_new0(ZorpAuthInfo, 1);
-              auth_info->create_time = now;
+              auth_info->created_at = now;
               g_hash_table_insert(auth_hash, g_strdup(client_key), auth_info);
             }
 
-          if (self->auth_cache_time > 0 && auth_info->last_auth_time + self->auth_cache_time > now)
+          bool is_auth_cache_not_expired = self->auth_cache_time > 0 && auth_info->last_auth_time + self->auth_cache_time > now;
+          if (is_auth_cache_not_expired)
             {
               if (self->auth_cache_update)
                 {
@@ -1728,47 +1919,65 @@ http_process_request(HttpProxy *self)
               h = NULL;
               G_UNLOCK(auth_mutex);
 
+              bool is_auth_time_window_expired = auth_info->accept_credit_until > 0 && auth_info->accept_credit_until < now;
               if (self->transparent_mode)
                 {
-                  if ((auth_info->accept_credit > 0 && auth_info->accept_credit < now) ||
-                      !http_lookup_header(&self->headers[EP_CLIENT], "Authorization", &h) ||
-                      !http_process_auth_info(self, h, auth_info))
+                  std::string redirect_location;
+                  if (self->auth_by_form && (is_auth_time_window_expired ||
+                      !http_get_form_auth(self, auth_info, redirect_location)))
                     {
-                      G_LOCK(auth_mutex);
+                      http_auth_update_accept_credit_until(self, auth_info, now);
+                      http_set_response(self, HTTP_MSG_OK, 200);
 
-                      if (self->max_auth_time > 0)
-                        auth_info->accept_credit = now + self->max_auth_time;
+                      std::string authform_file_path;
+                      if (self->login_page_path->len > 0)
+                        authform_file_path = self->login_page_path->str;
+                      else
+                        authform_file_path = http_error_file_path(self, "authform.html");
 
-                      G_UNLOCK(auth_mutex);
-                      self->error_code = HTTP_MSG_AUTH_REQUIRED;
-                      self->error_status = 401;
+                      gchar *authform_file = z_error_loader_format_file(authform_file_path.c_str(), "", Z_EF_ESCAPE_HTML, NULL, NULL);
+                      if (authform_file)
+                        {
+                          std::string html_form {authform_file};
+                          http_form_auth_replace_redirect_location(self, html_form, redirect_location);
+                          g_string_assign(self->custom_response_body, html_form.c_str());
+                          g_free(authform_file);
+                          self->send_custom_response = TRUE;
+                        }
+                      else
+                        {
+                          self->error_code = HTTP_MSG_IO_ERROR;
+                        }
+                      z_proxy_return(self, FALSE);
+                    }
+                  else if (!self->auth_by_form && (is_auth_time_window_expired ||
+                      !http_lookup_header(&self->headers[EP_CLIENT], "Authorization", &h) ||
+                      !http_process_auth_info(self, h, auth_info)))
+                    {
+                      http_auth_update_accept_credit_until(self, auth_info, now);
+                      http_set_response(self, HTTP_MSG_AUTH_REQUIRED, 401);
                       g_string_sprintf(self->error_msg, "Authentication is required.");
                       g_string_sprintfa(self->error_headers, "WWW-Authenticate: %s\r\n",
                                         http_process_create_realm(self, now, buf, sizeof(buf)));
                       z_proxy_return(self, FALSE);
                     }
                 }
-              else if ((auth_info->accept_credit > 0 && auth_info->accept_credit < now) ||
+              else if (is_auth_time_window_expired ||
                        !http_lookup_header(&self->headers[EP_CLIENT], "Proxy-Authorization", &h) ||
                        !http_process_auth_info(self, h, auth_info))
                 {
-                  G_LOCK(auth_mutex);
-
-                  if (self->max_auth_time > 0)
-                    auth_info->accept_credit = now + self->max_auth_time;
-
-                  G_UNLOCK(auth_mutex);
-                  self->error_code = HTTP_MSG_AUTH_REQUIRED;
-                  self->error_status = 407;
+                  http_auth_update_accept_credit_until(self, auth_info, now);
+                  http_set_response(self, HTTP_MSG_AUTH_REQUIRED, 407);
                   g_string_sprintf(self->error_msg, "Authentication is required.");
                   g_string_sprintfa(self->error_headers, "Proxy-Authenticate: %s\r\n",
                                     http_process_create_realm(self, now, buf, sizeof(buf)));
                   z_proxy_return(self, FALSE);
                 }
 
-              g_string_assign(self->auth_header_value, h->value->str);
+              if (h)
+                g_string_assign(self->auth_header_value, h->value->str);
 
-              if (self->auth_by_cookie)
+              if (self->auth_by_cookie || self->auth_by_form)
                 need_cookie_header = TRUE;
             }
         }
@@ -1831,11 +2040,6 @@ http_process_request(HttpProxy *self)
                   self->request_type == HTTP_REQTYPE_SERVER ? "server" : "proxy");
       z_proxy_return(self, FALSE);
     }
-
-  if (http_lookup_header(&self->headers[EP_CLIENT], "Host", &h))
-    g_string_assign(self->remote_server, h->value->str);
-  else
-    g_string_truncate(self->remote_server, 0);
 
   if (self->transparent_mode)
     {
@@ -1940,8 +2144,16 @@ http_process_request(HttpProxy *self)
           nextdotpos = strchr(dotpos + 1, '.');
         }
 
-      self->append_cookie = g_string_sized_new(32);
-      g_string_printf(self->append_cookie, "ZorpRealm=%s; path=/; domain=%s", client_key, startpos);
+      std::string append_cookie {std::string("ZorpRealm=") + client_key + std::string("; path=/; domain=") + startpos};
+      if (self->auth_by_form)
+        {
+          g_string_append_printf(self->error_headers, "Set-Cookie: %s\r\n", append_cookie.c_str());
+        }
+      else
+        {
+          self->append_cookie = g_string_sized_new(32);
+          g_string_assign(self->append_cookie, append_cookie.c_str());
+        }
     }
 
   z_proxy_return(self, TRUE);

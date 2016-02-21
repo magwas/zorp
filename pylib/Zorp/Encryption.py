@@ -456,6 +456,10 @@ class EncryptionPolicy(object):
         """
         return self.encryption
 
+class NoneEncryption(Encryption):
+    def __init__(self):
+        super(NoneEncryption, self).__init__(client_security = SSL_NONE, server_security = SSL_NONE)
+
 def getEncryptionPolicy(name):
     """
     <function internal="yes"/>
@@ -485,7 +489,7 @@ class SSLOptions(object):
       <description>
         <para>This class collects the TLS and SSL settings directly related
         to encryption, for example, the permitted protocol versions, ciphers,
-        and so on.
+        session reuse settings, and so on.
         Note that you cannot use this class directly, use an appropriate derived class,
         for example, <link linkend="python.Encryption.ClientSSLOptions">ClientSSLOptions</link>
         or <link linkend="python.Encryption.ServerSSLOptions">ServerSSLOptions</link> instead.
@@ -517,7 +521,6 @@ class SSLOptions(object):
                 </value>
               </hash>
             </type>
-            <default>SSL_CIPHERS_HIGH</default>
             <description>Specifies the allowed ciphers.
             For details, see <xref linkend="action.ssl.ciphers"/>.</description>
           </attribute>
@@ -604,7 +607,6 @@ class SSLOptions(object):
                 <type>
                   <link id="action.ssl.ciphers"/>
                 </type>
-                <default>SSL_CIPHERS_HIGH</default>
                 <description>Specifies the allowed ciphers.
                 For details, see <xref linkend="action.ssl.ciphers"/>.</description>
               </argument>
@@ -707,7 +709,7 @@ class ClientSSLOptions(SSLOptions):
       <description>
         <para>This class (based on the SSLOptions class) collects the TLS and SSL settings directly related
         to encryption, for example, the permitted protocol versions, ciphers,
-        and so on.
+        session reuse settings, and so on.
         </para>
       </description>
       <metainfo>
@@ -727,7 +729,6 @@ class ClientSSLOptions(SSLOptions):
             <type>
               <link id="action.ssl.ciphers"/>
             </type>
-            <default>SSL_CIPHERS_HIGH</default>
             <description>Specifies the allowed ciphers.
             For details, see <xref linkend="action.ssl.ciphers"/>.</description>
           </attribute>
@@ -822,7 +823,6 @@ class ClientSSLOptions(SSLOptions):
                 <type>
                   <link id="action.ssl.ciphers"/>
                 </type>
-                <default>SSL_CIPHERS_HIGH</default>
                 <description>Specifies the allowed ciphers.
                 For details, see <xref linkend="action.ssl.ciphers"/>.</description>
               </argument>
@@ -923,7 +923,7 @@ class ServerSSLOptions(SSLOptions):
       <description>
         <para>This class (based on the SSLOptions class) collects the TLS and SSL settings directly related
         to encryption, for example, the permitted protocol versions, ciphers,
-        and so on.
+        session reuse settings, and so on.
         </para>
       </description>
       <metainfo>
@@ -943,7 +943,6 @@ class ServerSSLOptions(SSLOptions):
             <type>
               <link id="action.ssl.ciphers"/>
             </type>
-            <default>SSL_CIPHERS_HIGH</default>
             <description>Specifies the allowed ciphers.
             For details, see <xref linkend="action.ssl.ciphers"/>.</description>
           </attribute>
@@ -1030,7 +1029,6 @@ class ServerSSLOptions(SSLOptions):
                 <type>
                   <link id="action.ssl.ciphers"/>
                 </type>
-                <default>SSL_CIPHERS_HIGH</default>
                 <description>Specifies the allowed ciphers.
                 For details, see <xref linkend="action.ssl.ciphers"/>.</description>
               </argument>

@@ -1,6 +1,4 @@
-TESTS = runalltests.sh
-
-EXTRA_DIST = HandlerMock.py                   \
+check_SCRIPTS = \
              test_deadlockcheck_algorithm.py  \
              test_detailedstatus_algorithm.py \
              test_getalgorithms.py            \
@@ -11,5 +9,12 @@ EXTRA_DIST = HandlerMock.py                   \
              test_start_algorithm.py          \
              test_status_algorithm.py         \
              test_szig.py                     \
-             test_szig_walk_algorithm.py      \
-             $(TESTS)
+             test_szig_walk_algorithm.py
+
+AM_TESTS_ENVIRONMENT = PYTHONPATH=${top_srcdir}:${top_srcdir}/pylib:${top_builddir}/pylib; export PYTHONPATH;
+
+TEST_EXTENSIONS = .py
+PY_LOG_COMPILER = $(PYTHON)
+
+TESTS = $(check_SCRIPTS)
+EXTRA_DIST = $(check_SCRIPTS) HandlerMock.py

@@ -59,7 +59,7 @@ z_error_append_escaped(GString *content, const gchar *append, guint32 flags)
 }
 
 gchar *
-z_error_loader_format_file(gchar *filepath, gchar *additional_info, guint32 flags, ZErrorLoaderVarInfo *infos, gpointer user_data)
+z_error_loader_format_file(const gchar *filepath, gchar *additional_info, guint32 flags, ZErrorLoaderVarInfo *infos, gpointer user_data)
 {
   gint fd;
   GString *new_contents = NULL;
