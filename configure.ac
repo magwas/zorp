@@ -170,10 +170,6 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
   AC_MSG_FAILURE(['$CXX $CXXFLAGS' does not accept full ISO C++11]))
 
 AM_PROG_LIBTOOL
-AC_PATH_PROG(GPERF, gperf)
-if test "x$GPERF" = "x"; then
-	AC_ERROR(No gperf found)
-fi
 
 dnl ***************************************************************************
 dnl Checks for header files.
