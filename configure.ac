@@ -252,9 +252,9 @@ PKG_CHECK_MODULES(ZORPLL, zorplibll >= $ZORPLL_MIN_VERSION,,
 PKG_CHECK_MODULES(OPENSSL, openssl >= $OPENSSL_MIN_VERSION,,
         AC_MSG_ERROR(Cannot find OpenSSL library version >= $OPENSSL_MIN_VERSION: is pkg-config in path?))
 
-PKG_CHECK_MODULES(PYTHON, python-2.7 >= $PYTHON_MIN_VERSION,,
+PKG_CHECK_MODULES(LIBPYTHON, python-2.7 >= $PYTHON_MIN_VERSION,,
 	AC_MSG_ERROR(Cannot find Python library version >= $PYTHON_MIN_VERSION: is pkg-config in path?))
-PKG_CHECK_MODULES(PYTHON, python-2.7 < $PYTHON_MAX_VERSION,,
+PKG_CHECK_MODULES(LIBPYTHON, python-2.7 < $PYTHON_MAX_VERSION,,
 	AC_MSG_ERROR(Cannot find Python library version >= $PYTHON_MAX_VERSION: is pkg-config in path?))
 
 
@@ -392,7 +392,7 @@ AC_DEFINE_UNQUOTED(ENABLE_IPV6, `enable_value $enable_ipv6`, [Enable IPv6 suppor
 AC_DEFINE_UNQUOTED(ENABLE_PREFORK, `enable_value $enable_prefork`, [Enable prefork support])
 
 # CPPFLAGS as supplied by dependencies
-DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $PYTHON_CFLAGS $OPENSSL_CFLAGS $LIBADPALERTING_CFLAGS"
+DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $LIBPYTHON_CFLAGS $OPENSSL_CFLAGS $LIBADPALERTING_CFLAGS"
 # CPPFLAGS defined to access local header files in addition to dependencies
 CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS"
 # common libraries (dependencies)
@@ -400,16 +400,16 @@ LIBPROXY_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
 MODULES_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
 
 # Dependencies outside the source tree
-DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $PYTHON_LIBS $PYTHON_DEPS $COREDUMP_LIBS $OPENSSL_LIBS"
+DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $LIBPYTHON_LIBS $LIBPYTHON_DEPS $COREDUMP_LIBS $OPENSSL_LIBS"
 # zorp library libs
-LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $PYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS"
+LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $LIBPYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS"
 # Zorp main program
 ZORP_LIBS="-L\$(top_builddir)/lib/ -lzorp $ZORPLL_LIBS $ZORPMISC_LIBS $ZORPLIC_LIBS $OPENSSL_LIBS $LIBADPALERTING_LIBS"
 # libraries to link the zorp modules against (implicitly linked
 # against the main binary, those does not need to be listed here
-MODULES_LIBS="-L\$(top_builddir)/lib/ -lzorp -L\$(top_builddir)/libproxy/ -lzorpproxy $ZORPLL_LIBS $PYTHON_LIBS"
+MODULES_LIBS="-L\$(top_builddir)/lib/ -lzorp -L\$(top_builddir)/libproxy/ -lzorpproxy $ZORPLL_LIBS $LIBPYTHON_LIBS"
 # module test program libs
-MODULETESTS_LIBS="$MODULES_LIBS $ZORP_LIBS $PYTHON_LIBS"
+MODULETESTS_LIBS="$MODULES_LIBS $ZORP_LIBS $LIBPYTHON_LIBS"
 
 dnl ***************************************************************************
 dnl Coverage flags and libs
