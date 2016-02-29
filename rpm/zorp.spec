@@ -2,7 +2,7 @@ Name:                   zorp
 Version:                6.0.8
 Release:                1
 URL:                    https://www.balabit.com/network-security/zorp-gpl
-Source0:                zorp_%{version}.0.tar.gz
+Source0:                zorp_%{version}.tar.gz
 Summary:                An advanced protocol analyzing firewall
 License:                GPL-2.0
 Group:                  System/Daemons
