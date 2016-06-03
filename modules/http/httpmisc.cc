@@ -996,9 +996,10 @@ http_destroy_url(HttpURL *url)
  * the resulting items in @self.
  **/
 gboolean
-http_split_request(HttpProxy *self, gchar *line, gint length)
+http_split_request(HttpProxy *self, const gchar *line, gint length)
 {
-  gchar *src, *dst;
+  const gchar *src;
+  char *dst;
   gint left, avail;
 
   z_proxy_enter(self);
@@ -1009,7 +1010,7 @@ http_split_request(HttpProxy *self, gchar *line, gint length)
   src = line;
   left = length;
   dst = self->request_method->str;
-  avail = self->request_method->allocated_len;
+  avail = self->request_method->allocated_len-1;
   COPY_SPACE;
   self->request_method->len = strlen(self->request_method->str);
 

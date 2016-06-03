@@ -556,7 +556,7 @@ gboolean http_string_assign_url_decode(GString *part, gboolean permit_invalid_he
 /* request/response processing */
 
 gboolean
-http_split_request(HttpProxy *self, gchar *line, gint length);
+http_split_request(HttpProxy *self, const gchar *line, gint length);
 gboolean
 http_split_response(HttpProxy *self, gchar *line, gint line_length);
 gboolean
