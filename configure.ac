@@ -202,6 +202,7 @@ dnl Checks for library functions.
 AC_CHECK_LIB(socket, setsockopt, SOCK_LIBS="$SOCK_LIBS -lsocket")
 AC_CHECK_LIB(xnet, inet_addr, SOCK_LIBS="$SOCK_LIBS -lxnet")
 AC_CHECK_LIB(nsl, gethostbyname, SOCK_LIBS="$SOCK_LIBS -lnsl")
+AC_CHECK_LIB(boost_unit_test_framework, main, enable_boost="yes", echo "no boost";exit 1)
 
 dnl Python might required -ldl, -lutil & -lm
 AC_CHECK_LIB(rt, aio_read, PYTHON_DEPS="$PYTHON_DEPS -lrt")
