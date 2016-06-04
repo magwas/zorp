@@ -986,6 +986,16 @@ http_destroy_url(HttpURL *url)
     }                                                           \
   while (0)
 
+const char * memcspn(const char *segment, char segmentChar, signed int length) {
+	while (length > 0 && (*segment == segmentChar)) {
+		length--;
+		segment++;
+	}
+	if (length <= 0 )
+		return NULL;
+	return segment;
+}
+
 /**
  * http_split_request:
  * @self: HttpProxy instance
@@ -998,69 +1008,107 @@ http_destroy_url(HttpURL *url)
 gboolean
 http_split_request(HttpProxy *self, const gchar *line, gint length)
 {
-  const gchar *src;
-  char *dst;
-  gint left, avail;
 
   z_proxy_enter(self);
   g_string_truncate(self->request_method, 0);
   self->request_flags = -1;
   self->request_version[0] = 0;
   g_string_truncate(self->request_url, 0);
-  src = line;
-  left = length;
-  dst = self->request_method->str;
-  avail = self->request_method->allocated_len-1;
-  COPY_SPACE;
-  self->request_method->len = strlen(self->request_method->str);
 
-  if (!self->request_method->len || (*src != ' ' && avail == 0))
-    {
+  size_t segmentLength;
+  const char * stringAt = line;
+  const char * spaceAt = (char *) memchr(stringAt,' ',length);
+  if (NULL == spaceAt) {
       /*LOG
-        This message indicates that the request method sent by the client is
-        invalid.
+        This message indicates that the request sent by the client is
+        invalid: no spaces.
       */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Request method empty, or too long; line='%.*s'", left, src);
-      /* request method empty, or request buffer overflow */
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Request have no spaces; line='%.*s'", length, line);
       z_proxy_return(self, FALSE);
-    }
-
-  SKIP_SPACES;
-  avail = self->max_url_length;
-  g_string_truncate(self->request_url, 0);
-
-  while (left > 0 && avail > 0 && *src != ' ' && *src)
-    {
-      g_string_append_c(self->request_url, *src++);
-      left--;
-      avail--;
-    }
-
-  if (!self->request_url->str[0] || (*src != ' ' && avail == 0))
-    {
-      /* url missing, or too long */
+  }
+  segmentLength = spaceAt - stringAt;
+  length -= segmentLength;
+  if (0==segmentLength) {
       /*LOG
-        This message indicates that the URL sent by the client is invalid.
+        This message indicates that the request sent by the client is
+        invalid: no method.
       */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "URL missing, or too long; line='%.*s'", left, src);
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Request have no method; line='%.*s'", length, line);
       z_proxy_return(self, FALSE);
-    }
+  }
+  g_string_append_len(self->request_method, stringAt, segmentLength);
 
-  SKIP_SPACES;
-  dst = self->request_version;
-  avail = sizeof(self->request_version) - 1;
-  COPY_SPACE;
+  stringAt = memcspn(spaceAt,' ',length);
+  if (NULL == stringAt) {
+	  /*LOG
+		This message indicates that the URL sent by the client is missing.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL missing; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
 
-  if (*src != ' ' && avail == 0)
-    {
-      /* protocol version too long */
-      /*LOG
-        This message indicates that the protocol version sent by the client
-        is invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Protocol version missing, or too long; line='%.*s'", left, src);
-      z_proxy_return(self, FALSE);
-    }
+  segmentLength = stringAt-spaceAt;
+  length -= segmentLength;
+
+  spaceAt = (char *) memchr(stringAt,' ',length);
+  if (NULL == spaceAt) {
+	  /*LOG
+		This message indicates that the URL sent by the client is not followed by space.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL is not followed by space; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
+
+  segmentLength = spaceAt - stringAt;
+  if(segmentLength >= self->max_url_length) {
+	  /*LOG
+		This message indicates that the URL sent by the client is too long.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL is too long; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
+
+  length -= segmentLength;
+
+  g_string_append_len(self->request_url, stringAt, segmentLength);
+
+  stringAt = memcspn(spaceAt,' ',length);
+  if (NULL == stringAt) {
+	  /*LOG
+		This message indicates that the version sent by the client is missing.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version missing; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
+
+  segmentLength = stringAt-spaceAt;
+  length -= segmentLength;
+
+  spaceAt = (char *) memchr(stringAt,' ',length);
+  if (NULL == spaceAt) {
+	  segmentLength = length;
+  } else {
+	  segmentLength = spaceAt - stringAt;
+  }
+
+  if (segmentLength == 0) {
+	  /*LOG
+		This message indicates that the http version is missing.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version is missing; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
+
+  if (segmentLength >= sizeof(self->request_version)) {
+	  /*LOG
+		This message indicates that the http version is too long.
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version is too long; line='%.*s'", length, line);
+	  z_proxy_return(self, FALSE);
+  }
+
+  strncpy(self->request_version, stringAt, segmentLength);
+  self->request_version[segmentLength] = 0;
 
   /*LOG
     This message reports the processed request details.
