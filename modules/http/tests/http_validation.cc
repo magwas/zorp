@@ -27,10 +27,15 @@
 extern const gchar *last_log;
 
 HttpProxy* new_proxy() {
-	HttpProxy* proxyFake = (HttpProxy *) malloc(sizeof(HttpProxy));
+	HttpProxy *proxyFake = (HttpProxy *)malloc(sizeof(HttpProxy));
+	const char *session_id = "test_session";
+	ZProxy *self=(ZProxy *)proxyFake;
+	g_strlcpy(self->session_id, session_id , strlen(session_id)+1);
+
 	proxyFake->request_url=g_string_new(NULL);
 	proxyFake->request_method=g_string_new(NULL);
 	proxyFake->max_url_length=2048;
+
 	return proxyFake;
 }
 
@@ -67,6 +72,10 @@ TestCase testCases[] = {
 		{ "GET                http://example.com  HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
 		{ "GET                http://example.com                            HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
 		{ "GET                http://example.com                            HTTP/1.0 ", "GET", "http://example.com", "HTTP/1.0" },
+		{ "GET http://example.com  1234567890abcd",  "GET", "http://example.com", "1234567890abcd"},
+		{ "GET http://example.com  1234567890abcd ",  "GET", "http://example.com", "1234567890abcd"},
+		{ "GET http://example.com  1234567890abcde",  "GET", "http://example.com", "1234567890abcde"},
+		{ "GET http://example.com  1234567890abcde ",  "GET", "http://example.com", "1234567890abcde"},
 		{NULL, NULL,NULL, NULL}
 };
 
@@ -81,7 +90,7 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
 		printf("%s\n",inputLine);
 		HttpProxy* proxyFake = new_proxy();
 		gboolean returnValue = http_split_request(proxyFake,inputLine,strlen(inputLine));
-
+		printf("version=%s\n\n",proxyFake->request_version);
 		BOOST_CHECK(TRUE==returnValue);
 		BOOST_CHECK(TRUE==g_string_equal(proxyFake->request_method,g_string_new(testCases[n].expected_method)));
 		BOOST_CHECK(TRUE==g_string_equal(proxyFake->request_url,g_string_new(testCases[n].expected_url)));
@@ -158,6 +167,7 @@ FailingTestCase failingCases[] = {
 		{ extralongString, "(%s): URL is not followed by space; line='%.*s'"},
 		{ extralongString2, "(%s): URL is too long; line='%.*s'"},
 		{ "GET http://example.com  aaaaaaaaaaaaaaaa", "(%s): http version is too long; line='%.*s'"},
+		{ "GET http://example.com  1234567890abcdef ", "(%s): http version is too long; line='%.*s'"},
 		{NULL, NULL,}
 };
 

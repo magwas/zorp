@@ -34,6 +34,7 @@
 #include <zorp/policy.h>
 
 #include "httpcommon.h"
+#include "messages.h"
 
 
 /* general limits applied to headers, etc. */

@@ -27,6 +27,7 @@
 
 #include <ctype.h>
 #include <zorp/log.h>
+#include <zorp/parse.h>
 
 #define HTTP_URL_HOST_ESCAPE_CHARS      "/$&+,;=?@ \"'<>#%{}|\\^~[]`"
 #define HTTP_URL_USER_ESCAPE_CHARS      "/$&+,:;=?@ \"'<>#%{}|\\^~[]`"
@@ -986,16 +987,6 @@ http_destroy_url(HttpURL *url)
     }                                                           \
   while (0)
 
-const char * memcspn(const char *segment, char segmentChar, signed int length) {
-	while (length > 0 && (*segment == segmentChar)) {
-		length--;
-		segment++;
-	}
-	if (length <= 0 )
-		return NULL;
-	return segment;
-}
-
 /**
  * http_split_request:
  * @self: HttpProxy instance
@@ -1006,7 +997,7 @@ const char * memcspn(const char *segment, char segmentChar, signed int length) {
  * the resulting items in @self.
  **/
 gboolean
-http_split_request(HttpProxy *self, const gchar *line, gint length)
+http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 {
 
   z_proxy_enter(self);
@@ -1015,101 +1006,24 @@ http_split_request(HttpProxy *self, const gchar *line, gint length)
   self->request_version[0] = 0;
   g_string_truncate(self->request_url, 0);
 
-  size_t segmentLength;
-  const char * stringAt = line;
-  const char * spaceAt = (char *) memchr(stringAt,' ',length);
-  if (NULL == spaceAt) {
-      /*LOG
-        This message indicates that the request sent by the client is
-        invalid: no spaces.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Request have no spaces; line='%.*s'", length, line);
-      z_proxy_return(self, FALSE);
-  }
-  segmentLength = spaceAt - stringAt;
-  length -= segmentLength;
-  if (0==segmentLength) {
-      /*LOG
-        This message indicates that the request sent by the client is
-        invalid: no method.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Request have no method; line='%.*s'", length, line);
-      z_proxy_return(self, FALSE);
-  }
-  g_string_append_len(self->request_method, stringAt, segmentLength);
 
-  stringAt = memcspn(spaceAt,' ',length);
-  if (NULL == stringAt) {
-	  /*LOG
-		This message indicates that the URL sent by the client is missing.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL missing; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
+  ParseState parseState;
+  startParseBuffer(line, bufferLength, &parseState);
+  ParseState *pParseState=&parseState;
 
-  segmentLength = stringAt-spaceAt;
-  length -= segmentLength;
+  parseToSpaceWithErrorHandling(pParseState, self->request_method, requestHaveNoSpaces,
+			requesthaveNoMethod, NULL, 0);
 
-  spaceAt = (char *) memchr(stringAt,' ',length);
-  if (NULL == spaceAt) {
-	  /*LOG
-		This message indicates that the URL sent by the client is not followed by space.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL is not followed by space; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
+  skipSpacesWithErrorHandling(urlMissing, pParseState);
 
-  segmentLength = spaceAt - stringAt;
-  if(segmentLength >= self->max_url_length) {
-	  /*LOG
-		This message indicates that the URL sent by the client is too long.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "URL is too long; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
+  parseToSpaceWithErrorHandling(pParseState, self->request_url, urlIsNotFollowedBySpace,
+			requesthaveNoMethod, urlIsTooLong, self->max_url_length);
 
-  length -= segmentLength;
+  skipSpacesWithErrorHandling(httpVersionMissing, pParseState);
 
-  g_string_append_len(self->request_url, stringAt, segmentLength);
-
-  stringAt = memcspn(spaceAt,' ',length);
-  if (NULL == stringAt) {
-	  /*LOG
-		This message indicates that the version sent by the client is missing.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version missing; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
-
-  segmentLength = stringAt-spaceAt;
-  length -= segmentLength;
-
-  spaceAt = (char *) memchr(stringAt,' ',length);
-  if (NULL == spaceAt) {
-	  segmentLength = length;
-  } else {
-	  segmentLength = spaceAt - stringAt;
-  }
-
-  if (segmentLength == 0) {
-	  /*LOG
-		This message indicates that the http version is missing.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version is missing; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
-
-  if (segmentLength >= sizeof(self->request_version)) {
-	  /*LOG
-		This message indicates that the http version is too long.
-	  */
-	  z_proxy_log(self, HTTP_VIOLATION, 1, "http version is too long; line='%.*s'", length, line);
-	  z_proxy_return(self, FALSE);
-  }
-
-  strncpy(self->request_version, stringAt, segmentLength);
-  self->request_version[segmentLength] = 0;
-
+  parseToSpaceGcharWithErrorHandling(pParseState, self->request_version,
+	  		NULL, httpVersionMissing,
+			httpVersionTooLong, sizeof(self->request_version)-1);
   /*LOG
     This message reports the processed request details.
   */
