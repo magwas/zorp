@@ -12,7 +12,7 @@ const char * memcspn(const char *segment, char segmentChar, signed int length) {
 	return segment;
 }
 
-void startParseBuffer(const gchar* line, gint bufferLength,
+void parse_start(const gchar* line, gint bufferLength,
 		ParseState *pParseState)
 {
 	pParseState->length = bufferLength;
@@ -55,7 +55,7 @@ int _parseToSpace(ParseState* pParseState,
 	return TRUE;
 }
 
-int parseToSpace(ParseState* pParseState, GString* outputString,
+int parse_until_space_to_GString(ParseState* pParseState, GString* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength)
 {
@@ -70,7 +70,7 @@ int parseToSpace(ParseState* pParseState, GString* outputString,
 	return TRUE;
 }
 
-int parseToSpaceGchar(ParseState* pParseState, gchar* outputString,
+int parse_until_space_to_gchar(ParseState* pParseState, gchar* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength)
 {
@@ -86,7 +86,7 @@ int parseToSpaceGchar(ParseState* pParseState, gchar* outputString,
 	return TRUE;
 }
 
-int skipSpaces(const char* noStringReached, ParseState* pParseState) {
+int parse_until_spaces_end(const char* noStringReached, ParseState* pParseState) {
 	pParseState->stringAt = memcspn(pParseState->spaceAt, ' ',
 			pParseState->length);
 	if (NULL == pParseState->stringAt) {

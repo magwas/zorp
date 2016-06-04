@@ -7,41 +7,41 @@ typedef struct {
 
 extern const char * memcspn(const char *segment, char segmentChar, signed int length);
 
-void startParseBuffer(const gchar* line, gint bufferLength,
+void parse_start(const gchar* line, gint bufferLength,
 		ParseState *pParseState);
 
-int parseToSpace(ParseState* pParseState, GString* outputString,
+int parse_until_space_to_GString(ParseState* pParseState, GString* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength);
 
-int parseToSpaceGchar(ParseState* pParseState, gchar* outputString,
+int parse_until_space_to_gchar(ParseState* pParseState, gchar* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength);
 
-int skipSpaces(const char* noStringReached, ParseState* pParseState);
+int parse_until_spaces_end(const char* noStringReached, ParseState* pParseState);
 
-#define parseToSpaceWithErrorHandling(pParseState, outputString, \
+#define parse_until_space_to_GString_with_error_handling(pParseState, outputString, \
 	noSpaceAfterMsg, zeroLengthMsg,                              \
 	tooLongMsg, maxLength)                                       \
-	  if (FALSE == parseToSpace(pParseState, outputString, \
+	  if (FALSE == parse_until_space_to_GString(pParseState, outputString, \
 				noSpaceAfterMsg, zeroLengthMsg,                              \
 				tooLongMsg, maxLength)) { \
 		  z_proxy_log2(self, HTTP_VIOLATION, 1, parseState.error_message, bufferLength, line); \
 		  z_proxy_return(self,FALSE); \
 	  }
 
-#define parseToSpaceGcharWithErrorHandling(pParseState, outputString, \
+#define parse_until_space_to_gchar_with_error_handling(pParseState, outputString, \
 	noSpaceAfterMsg, zeroLengthMsg,                              \
 	tooLongMsg, maxLength)                                       \
-	  if (FALSE == parseToSpaceGchar(pParseState, outputString, \
+	  if (FALSE == parse_until_space_to_gchar(pParseState, outputString, \
 				noSpaceAfterMsg, zeroLengthMsg,                              \
 				tooLongMsg, maxLength)) { \
 		  z_proxy_log2(self, HTTP_VIOLATION, 1, parseState.error_message, bufferLength, line); \
 		  z_proxy_return(self,FALSE); \
 	  }
 
-#define skipSpacesWithErrorHandling(noStringReached, pParseState) \
-if (FALSE == skipSpaces(urlMissing, pParseState))\
+#define parse_until_spaces_end_with_error_handling(noStringReached, pParseState) \
+if (FALSE == parse_until_spaces_end(noStringReached, pParseState))\
 {\
 	  z_proxy_log2(self, HTTP_VIOLATION, 1, parseState.error_message, bufferLength, line);\
 	  z_proxy_return(self,FALSE);\

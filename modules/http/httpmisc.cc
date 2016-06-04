@@ -1008,22 +1008,22 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 
 
   ParseState parseState;
-  startParseBuffer(line, bufferLength, &parseState);
+  parse_start(line, bufferLength, &parseState);
   ParseState *pParseState=&parseState;
 
-  parseToSpaceWithErrorHandling(pParseState, self->request_method, requestHaveNoSpaces,
-			requesthaveNoMethod, NULL, 0);
+  parse_until_space_to_GString_with_error_handling(pParseState, self->request_method, msg_request_have_no_spaces,
+			msg_request_have_no_method, NULL, 0);
 
-  skipSpacesWithErrorHandling(urlMissing, pParseState);
+  parse_until_spaces_end_with_error_handling(msg_url_missing, pParseState);
 
-  parseToSpaceWithErrorHandling(pParseState, self->request_url, urlIsNotFollowedBySpace,
-			requesthaveNoMethod, urlIsTooLong, self->max_url_length);
+  parse_until_space_to_GString_with_error_handling(pParseState, self->request_url, msg_url_is_not_followed_by_space,
+			msg_request_have_no_method, msg_url_is_too_long, self->max_url_length);
 
-  skipSpacesWithErrorHandling(httpVersionMissing, pParseState);
+  parse_until_spaces_end_with_error_handling(msg_http_version_missing, pParseState);
 
-  parseToSpaceGcharWithErrorHandling(pParseState, self->request_version,
-	  		NULL, httpVersionMissing,
-			httpVersionTooLong, sizeof(self->request_version)-1);
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->request_version,
+	  		NULL, msg_http_version_missing,
+			msg_http_version_too_long, sizeof(self->request_version)-1);
   /*LOG
     This message reports the processed request details.
   */
