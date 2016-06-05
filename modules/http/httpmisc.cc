@@ -1094,6 +1094,7 @@ http_split_response(HttpProxy *self, const gchar *line, gint line_length)
       z_proxy_return(self, FALSE);
     }
 
+
   char *endptr;
   self->response_code = strtol(self->response, &endptr, 10);
   if (endptr == self->response)
@@ -1105,6 +1106,15 @@ http_split_response(HttpProxy *self, const gchar *line, gint line_length)
       z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", line_length, line);
       z_proxy_return(self, FALSE);
   }
+  if ( (self->response_code > 999) || (self->response_code < 100) )
+    {
+      /*LOG
+        This message indicates that the response code sent by the server is
+        not three digits
+      */
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", line_length, line);
+      z_proxy_return(self, FALSE);
+    }
   SKIP_SPACES;
   avail = 256;
 

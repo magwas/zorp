@@ -61,6 +61,10 @@ typedef struct {
 #define longResponse "HTTP/1.0 200 " StringOfLength256 "a"
 TestCase testCases[] = {
 		{ "HTTP/1.1 200 OK", "HTTP/1.1", "200", 200, "OK" },
+		{ "HTTP/1.1  200 OK", "HTTP/1.1", "200", 200, "OK" },
+		{ "HTTP/1.1  200  OK", "HTTP/1.1", "200", 200, "OK" },
+		{ "HTTP/1.1  200  OK ", "HTTP/1.1", "200", 200, "OK " },
+		{ "HTTP/1.1  200  OK  ", "HTTP/1.1", "200", 200, "OK  " },
 		{ "HTTP/1.1 404 Not Found", "HTTP/1.1", "404", 404, "Not Found" },
 		{ "HTTP/1.1 400 Bad Request", "HTTP/1.1", "400", 400, "Bad Request" },
 		{ longResponse, "HTTP/1.0", "200", 200, StringOfLength256},
@@ -94,8 +98,11 @@ typedef struct {
 
 FailingTestCase failingCases[] = {
 		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Invalid HTTP status line; line='%s'"},
+		{ "HTTP", "(%s): Response code empty or too long; line='%.*s'"},
 		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Response version empty or too long; line='%.*s'"},
 		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK", "(%s): Response version empty or too long; line='%.*s'"},
+		{ "HTTP/1.1 20 OK", "(%s): Response code is not three digits; line='%.*s'"},
+		{ "HTTP/1.1 20f OK", "(%s): Response code is not three digits; line='%.*s'"},
 		{ "HTTP/1.0 aaa OK", "(%s): Response code is not a number; line='%.*s'"},
 		{ "HTTP 2001 OK", "(%s): Response code empty or too long; line='%.*s'"},
 		{ "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Response code empty or too long; line='%.*s'"},
