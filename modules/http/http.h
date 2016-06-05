@@ -559,7 +559,7 @@ gboolean http_string_assign_url_decode(GString *part, gboolean permit_invalid_he
 gboolean
 http_split_request(HttpProxy *self, const gchar *line, gint length);
 gboolean
-http_split_response(HttpProxy *self, gchar *line, gint line_length);
+http_split_response(HttpProxy *self, const gchar *line, gint line_length);
 gboolean
 http_parse_version(HttpProxy *self, gint side, gchar *version_str);
 

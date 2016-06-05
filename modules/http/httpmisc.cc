@@ -1041,9 +1041,10 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
  * storing the resulting items in @self.
  **/
 gboolean
-http_split_response(HttpProxy *self, gchar *line, gint line_length)
+http_split_response(HttpProxy *self, const gchar *line, gint line_length)
 {
-  gchar *src, *dst;
+  const gchar *src;
+  gchar *dst;
   gint left, avail;
 
   z_proxy_enter(self);
@@ -1093,7 +1094,17 @@ http_split_response(HttpProxy *self, gchar *line, gint line_length)
       z_proxy_return(self, FALSE);
     }
 
-  self->response_code = atoi(self->response);
+  char *endptr;
+  self->response_code = strtol(self->response, &endptr, 10);
+  if (endptr == self->response)
+  {
+      /*LOG
+        This message indicates that the response code sent by the server is
+        not a number.
+      */
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", line_length, line);
+      z_proxy_return(self, FALSE);
+  }
   SKIP_SPACES;
   avail = 256;
 
