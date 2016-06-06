@@ -1008,7 +1008,10 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 
 
   ParseState parseState;
-  parse_start(line, bufferLength, &parseState);
+  parse_start(&parseState,
+  		line, bufferLength,
+  		(ZProxy *)self, HTTP_VIOLATION, 1);
+
   ParseState *pParseState=&parseState;
 
   parse_until_space_to_GString_with_error_handling(pParseState, self->request_method, msg_request_have_no_spaces,
@@ -1041,59 +1044,38 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
  * storing the resulting items in @self.
  **/
 gboolean
-http_split_response(HttpProxy *self, const gchar *line, gint line_length)
+http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
 {
-  const gchar *src;
-  gchar *dst;
-  gint left, avail;
-
   z_proxy_enter(self);
   self->response_version[0] = 0;
   self->response[0] = 0;
   g_string_truncate(self->response_msg, 0);
-  src = line;
-  left = line_length;
-  dst = self->response_version;
-  avail = sizeof(self->response_version) - 1;
-  COPY_SPACE;
+
+  ParseState parseState;
+  parse_start(&parseState,
+  		line, bufferLength,
+  		(ZProxy *)self, HTTP_VIOLATION, 1);
+  ParseState *pParseState=&parseState;
+
+
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->response_version,
+	  		msg_response_code_missing, msg_response_version_missing,
+			msg_response_version_too_long, sizeof(self->response_version)-1);
 
   if (memcmp(self->response_version, "HTTP", 4) != 0)
     {
-      /* no status line */
       /*LOG
         This message indicates that the server sent an invalid response status line.
       */
-      z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%s'", dst);
+      z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%.*s'", bufferLength, line);
       z_proxy_return(self, FALSE);
     }
 
-  if (!self->response_version[0] || (*src != ' ' && avail == 0))
-    {
-      /* response version empty or too long */
-      /*LOG
-        This message indicates that the protocol version sent by the server
-        is invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response version empty or too long; line='%.*s'", line_length, line);
-      z_proxy_return(self, FALSE);
-    }
+  parse_until_spaces_end_with_error_handling(msg_response_code_missing, pParseState);
 
-  SKIP_SPACES;
-  dst = self->response;
-  avail = sizeof(self->response) - 1;
-  COPY_SPACE;
-
-  if (!self->response[0] || (*src != ' ' && left && avail == 0))
-    {
-      /* response code empty or too long */
-      /*LOG
-        This message indicates that the response code sent by the server is
-        invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code empty or too long; line='%.*s'", line_length, line);
-      z_proxy_return(self, FALSE);
-    }
-
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->response,
+	  		msg_response_message_missing, msg_response_code_missing,
+			msg_response_code_too_long, sizeof(self->response)-1);
 
   char *endptr;
   self->response_code = strtol(self->response, &endptr, 10);
@@ -1103,30 +1085,24 @@ http_split_response(HttpProxy *self, const gchar *line, gint line_length)
         This message indicates that the response code sent by the server is
         not a number.
       */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", line_length, line);
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", bufferLength, line);
       z_proxy_return(self, FALSE);
   }
   if ( (self->response_code > 999) || (self->response_code < 100) )
-    {
-      /*LOG
-        This message indicates that the response code sent by the server is
-        not three digits
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", line_length, line);
-      z_proxy_return(self, FALSE);
-    }
-  SKIP_SPACES;
-  avail = 256;
+	{
+	  /*LOG
+		This message indicates that the response code sent by the server is
+		not three digits
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", bufferLength, line);
+	  z_proxy_return(self, FALSE);
+	}
 
-  while (left > 0 && avail > 0)
-    {
-      g_string_append_c(self->response_msg, *src);
-      src++;
-      left--;
-      avail--;
-    }
+  parse_until_spaces_end_with_error_handling(msg_response_message_missing, pParseState);
 
-  *dst = 0;
+  parse_until_end_to_GString_with_error_handling(pParseState, self->response_msg,
+	  		msg_response_message_missing,
+			NULL, 255);
 
   /*LOG
     This message reports the processed response details.
@@ -1135,8 +1111,6 @@ http_split_response(HttpProxy *self, const gchar *line, gint line_length)
   z_proxy_return(self, TRUE);
 }
 
-#undef SKIP_SPACES
-#undef COPY_SPACE
 
 /**
  * http_parse_version:

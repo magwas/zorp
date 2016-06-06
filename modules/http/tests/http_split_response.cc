@@ -25,6 +25,9 @@
 
 
 extern const gchar *last_log;
+extern const gchar *last_class;
+extern int last_level;
+
 
 HttpProxy* new_proxy() {
 	HttpProxy *proxyFake = (HttpProxy *)malloc(sizeof(HttpProxy));
@@ -79,9 +82,12 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		if (inputLine == NULL) {
 			break;
 		}
-		printf("%s\n",inputLine);
+		printf("\n%s\n",inputLine);
 		HttpProxy* proxyFake = new_proxy();
+		last_log="no log arrived";
 		gboolean returnValue = http_split_response(proxyFake, inputLine, strlen(inputLine));
+		printf("log=%s\n",last_log);
+		printf("msg         =%s\n",proxyFake->response_msg->str);
 		BOOST_CHECK(TRUE==returnValue);
 		BOOST_CHECK(0==strcmp(proxyFake->response_version,testCases[n].expected_response_version));
 		BOOST_CHECK(0==strcmp(proxyFake->response,testCases[n].expected_response));
@@ -94,19 +100,42 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 typedef struct {
 	const char* input_line;
 	const char* expected_message;
+	const char* expected_class;
+	int expected_loglevel;
 } FailingTestCase;
 
 FailingTestCase failingCases[] = {
-		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Invalid HTTP status line; line='%s'"},
-		{ "HTTP", "(%s): Response code empty or too long; line='%.*s'"},
-		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Response version empty or too long; line='%.*s'"},
-		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK", "(%s): Response version empty or too long; line='%.*s'"},
-		{ "HTTP/1.1 20 OK", "(%s): Response code is not three digits; line='%.*s'"},
-		{ "HTTP/1.1 20f OK", "(%s): Response code is not three digits; line='%.*s'"},
-		{ "HTTP/1.0 aaa OK", "(%s): Response code is not a number; line='%.*s'"},
-		{ "HTTP 2001 OK", "(%s): Response code empty or too long; line='%.*s'"},
-		{ "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Response code empty or too long; line='%.*s'"},
-		{NULL, NULL,}
+		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"(%s): Response code is missing; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "aaaa 200 OK",
+				"(%s): Invalid HTTP status line; line='%.*s'",
+				HTTP_RESPONSE, 6},
+		{ "HTTP",
+				"(%s): Response code is missing; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"(%s): Response code is missing; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK",
+				"(%s): Response version is too long; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTP/1.1 20 OK",
+				"(%s): Response code is not three digits; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTP/1.1 20f OK",
+				"(%s): Response code is not three digits; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTP/1.0 aaa OK",
+				"(%s): Response code is not a number; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTP 2001 OK",
+				"(%s): Response code is too long; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{ "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"(%s): Response message is missing; line='%.*s'",
+				HTTP_VIOLATION, 1},
+		{NULL, NULL, NULL, 0}
 };
 
 BOOST_AUTO_TEST_CASE(test_incorrect_response_causes_error_return)
@@ -123,8 +152,10 @@ BOOST_AUTO_TEST_CASE(test_incorrect_response_causes_error_return)
 		HttpProxy* proxyFake = new_proxy();
 		last_log="no log arrived";
 		BOOST_CHECK(FALSE==http_split_response(proxyFake,inputLine,strlen(inputLine)));
-		printf("log=%s\nexp=%s\n",last_log,failingCases[n].expected_message);
-		BOOST_CHECK(0==strcmp(last_log,failingCases[n].expected_message));
+		printf("class=%s\nlevel=%u\nlog=%s\nexp=%s\n",last_class,last_level, last_log,failingCases[n].expected_message);
+		BOOST_CHECK(0==strcmp(last_log, failingCases[n].expected_message));
+		BOOST_CHECK(0==strcmp(last_class, failingCases[n].expected_class));
+		BOOST_CHECK(last_level == failingCases[n].expected_loglevel);
 
 		n++;
 	} while (1);

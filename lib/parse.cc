@@ -12,11 +12,19 @@ const char * memcspn(const char *segment, char segmentChar, signed int length) {
 	return segment;
 }
 
-void parse_start(const gchar* line, gint bufferLength,
-		ParseState *pParseState)
+void parse_start(ParseState *pParseState,
+		const gchar* line,
+		gint bufferLength,
+		ZProxy *proxy,
+		const char *error_class,
+		gint error_level)
 {
 	pParseState->length = bufferLength;
 	pParseState->stringAt = line;
+	pParseState->proxy = proxy;
+	pParseState->error_class = error_class;
+	pParseState->error_level = error_level;
+	pParseState->error_class = error_class;
 }
 
 int _parseToSpace(ParseState* pParseState,
@@ -67,6 +75,22 @@ int parse_until_space_to_GString(ParseState* pParseState, GString* outputString,
 		return FALSE;
 	}
 	g_string_append_len(outputString, pParseState->stringAt, segmentLength);
+	return TRUE;
+}
+
+int parse_until_end_to_GString(ParseState* pParseState, GString* outputString,
+		const char* zeroLengthMsg,
+		size_t maxLength)
+{
+	size_t segmentLength;
+	size_t length = pParseState->length;
+	if(FALSE == _parseToSpace(pParseState, NULL,
+			zeroLengthMsg, NULL,
+			maxLength, &segmentLength))
+	{
+		return FALSE;
+	}
+	g_string_append_len(outputString, pParseState->stringAt, std::min(length, maxLength+1));
 	return TRUE;
 }
 

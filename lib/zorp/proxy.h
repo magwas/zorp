@@ -188,26 +188,27 @@ public:
 
 #ifdef G_OS_WIN32
   #define LOG_MSG(format) format
-  #define z_log2(session_id, class_, level, format, args...) \
-		z_log2(session_id, class_, level, format, ##args);
 #else
   #define LOG_MSG(format) "(%s): " format
-  #define z_log2(session_id, class_, level, format, args...) \
-    do \
-      { \
-        if (z_log_enabled(class_, level)) \
-	  /*NOLOG*/ \
-          z_llog(class_, level, format, z_log_session_id(session_id) , ##args); \
-      } \
-    while (0)
+  extern inline void z_log2(const char * session_id, const char *class_, gint level, const char *format, ...)
+  {
+	if (z_log_enabled(class_, level)) {
+	  va_list l;
+	  va_start(l, format);
+	  z_llog(class_, level, format, z_log_session_id(session_id),l);
+	  va_end(l);
+	}
+  };
 #endif
 
-#define z_proxy_log2(self, class_, level, format, args...) 		\
-  do {									\
-    z_object_check_compatible((ZObject *) self, Z_CLASS(ZProxy));	\
-    /*NOLOG*/ 								\
-    z_log2(((ZProxy *) self)->session_id, class_, level, format,  ##args);	\
-  } while (0)
+extern inline void z_proxy_log2(ZProxy *self, const char * class_, int level, const char *format,...)
+{
+	va_list l;
+	va_start(l, format);
+    z_object_check_compatible((ZObject *) self, Z_CLASS(ZProxy));
+    z_log2(((ZProxy *) self)->session_id, class_, level, format, l);
+    va_end(l);
+};
 
 
 #define z_proxy_log_data_dump(self, class_, level, buf, len)             \
