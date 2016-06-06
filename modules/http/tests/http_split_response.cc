@@ -22,11 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../http.h"
-
-
-extern const gchar *last_log;
-extern const gchar *last_class;
-extern int last_level;
+#include "testutil.h"
 
 
 HttpProxy* new_proxy() {
@@ -84,9 +80,9 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		}
 		printf("\n%s\n",inputLine);
 		HttpProxy* proxyFake = new_proxy();
-		last_log="no log arrived";
+		last_log_result.msg="no log arrived";
 		gboolean returnValue = http_split_response(proxyFake, inputLine, strlen(inputLine));
-		printf("log=%s\n",last_log);
+		printf("log=%s\n",last_log_result.msg);
 		printf("msg         =%s\n",proxyFake->response_msg->str);
 		BOOST_CHECK(TRUE==returnValue);
 		BOOST_CHECK(0==strcmp(proxyFake->response_version,testCases[n].expected_response_version));
@@ -96,13 +92,6 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		n++;
 	} while (1);
 }
-
-typedef struct {
-	const char* input_line;
-	const char* expected_message;
-	const char* expected_class;
-	int expected_loglevel;
-} FailingTestCase;
 
 FailingTestCase failingCases[] = {
 		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -140,24 +129,5 @@ FailingTestCase failingCases[] = {
 
 BOOST_AUTO_TEST_CASE(test_incorrect_response_causes_error_return)
 {
-	int n = 0;
-	z_log_init("zorp test",3);
-	z_log_change_logspec("http.*:6",NULL);
-	do {
-		const char* inputLine = failingCases[n].input_line;
-		if (inputLine == NULL) {
-			break;
-		}
-		printf("\n%s\n",inputLine);
-		HttpProxy* proxyFake = new_proxy();
-		last_log="no log arrived";
-		BOOST_CHECK(FALSE==http_split_response(proxyFake,inputLine,strlen(inputLine)));
-		printf("class=%s\nlevel=%u\nlog=%s\nexp=%s\n",last_class,last_level, last_log,failingCases[n].expected_message);
-		BOOST_CHECK(0==strcmp(last_log, failingCases[n].expected_message));
-		BOOST_CHECK(0==strcmp(last_class, failingCases[n].expected_class));
-		BOOST_CHECK(last_level == failingCases[n].expected_loglevel);
-
-		n++;
-	} while (1);
-
+	testErrorCases(http_split_response(proxyFake,inputLine,strlen(inputLine)));
 }

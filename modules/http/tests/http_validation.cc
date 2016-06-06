@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../http.h"
+#include "testutil.h"
 
 
 extern const gchar *last_log;
@@ -99,11 +100,6 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
 	} while (1);
 }
 
-typedef struct {
-	const char* input_line;
-	const char* expected_message;
-} FailingTestCase;
-
 const char* extralongString = "GET "
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -161,33 +157,25 @@ const char* extralongString2 = "GET "
 		" HTTP/1.0"
 		;
 FailingTestCase failingCases[] = {
-		{ " http://example.com HTTP/1.0", "(%s): Request have no method; line='%.*s'"},
-		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Request have no spaces; line='%.*s'"},
-		{ "GET ", "(%s): URL missing; line='%.*s'"},
-		{ extralongString, "(%s): URL is not followed by space; line='%.*s'"},
-		{ extralongString2, "(%s): URL is too long; line='%.*s'"},
-		{ "GET http://example.com  aaaaaaaaaaaaaaaa", "(%s): http version is too long; line='%.*s'"},
-		{ "GET http://example.com  1234567890abcdef ", "(%s): http version is too long; line='%.*s'"},
-		{NULL, NULL,}
+		{ " http://example.com HTTP/1.0", "(%s): Request have no method; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Request have no spaces; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ "GET ", "(%s): URL missing; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ extralongString, "(%s): URL is not followed by space; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ extralongString2, "(%s): URL is too long; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ "GET http://example.com  aaaaaaaaaaaaaaaa", "(%s): http version is too long; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{ "GET http://example.com  1234567890abcdef ", "(%s): http version is too long; line='%.*s'",
+		HTTP_VIOLATION, 1},
+		{NULL, NULL, NULL, 9}
 };
 
 BOOST_AUTO_TEST_CASE(test_incorrect_line_causes_error_return)
 {
-	int n = 0;
-	z_log_init("zorp test",3);
-	z_log_change_logspec("http.*:5",NULL);
-	do {
-		const char* inputLine = failingCases[n].input_line;
-		if (inputLine == NULL) {
-			break;
-		}
-		printf("%s\n",inputLine);
-		HttpProxy* proxyFake = new_proxy();
-		BOOST_CHECK(FALSE==http_split_request(proxyFake,inputLine,strlen(inputLine)));
-		printf("log=%s\nexp=%s\n\n",last_log,failingCases[n].expected_message);
-		BOOST_CHECK(0==strcmp(last_log,failingCases[n].expected_message));
-
-		n++;
-	} while (1);
+	testErrorCases(http_split_request(proxyFake,inputLine,strlen(inputLine)));
 
 }
