@@ -963,30 +963,6 @@ http_destroy_url(HttpURL *url)
   g_string_free(url->fragment, TRUE);
 }
 
-#define SKIP_SPACES                             \
-  do                                            \
-    {                                           \
-      while (left > 0 && *src == ' ')           \
-        {                                       \
-          src++;                                \
-          left--;                               \
-        }                                       \
-    }                                           \
-  while (0)
-
-#define COPY_SPACE                                              \
-  do                                                            \
-    {                                                           \
-      while (left > 0 && avail > 0 && *src != ' ' && *src)      \
-        {                                                       \
-          *dst++ = *src++;                                      \
-          left--;                                               \
-          avail--;                                              \
-        }                                                       \
-      *dst = 0;                                                 \
-    }                                                           \
-  while (0)
-
 /**
  * http_split_request:
  * @self: HttpProxy instance
