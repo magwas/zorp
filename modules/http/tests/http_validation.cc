@@ -64,7 +64,7 @@ typedef struct {
 	const char* expected_version;
 } TestCase;
 
-TestCase testCases[] = {
+TestCase validTestCases[] = {
 		{ "GET http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
 		{ "GET  http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
 		{ "GET                http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
 	z_log_change_logspec("http.*:6",NULL);
 	int n = 0;
 	do {
-		const char* inputLine = testCases[n].input_line;
+		const char* inputLine = validTestCases[n].input_line;
 		if (inputLine == NULL) {
 			break;
 		}
@@ -94,19 +94,19 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
 		BOOST_CHECK_MESSAGE(TRUE==returnValue,
 				"error return for\n input: " <<inputLine <<
 				"\n log: " <<last_log_result.msg);
-		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_method,g_string_new(testCases[n].expected_method)),
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_method,g_string_new(validTestCases[n].expected_method)),
 				"request method mismatch"
-				"\n expected method: " << testCases[n].expected_method <<
+				"\n expected method: " << validTestCases[n].expected_method <<
 				"\n actual method  :" << proxyFake->request_method->str <<
 				"\n line: " << inputLine);
-		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_url,g_string_new(testCases[n].expected_url)),
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_url,g_string_new(validTestCases[n].expected_url)),
 				"request url mismatch"
-				"\n expected url: " << testCases[n].expected_url <<
+				"\n expected url: " << validTestCases[n].expected_url <<
 				"\n actual url  :" << proxyFake->request_url->str <<
 				"\n line: " << inputLine);
-		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->request_version,testCases[n].expected_version),
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->request_version,validTestCases[n].expected_version),
 				"request version mismatch"
-				"\nexpected version: " << testCases[n].expected_version <<
+				"\nexpected version: " << validTestCases[n].expected_version <<
 				"\n actual version  :" << proxyFake->request_version <<
 				"\n line: " << inputLine);
 		n++;

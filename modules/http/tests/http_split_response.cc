@@ -58,7 +58,7 @@ typedef struct {
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
 
 #define longResponse "HTTP/1.0 200 " StringOfLength256 "a"
-TestCase testCases[] = {
+TestCase validTestCases[] = {
 		{ "HTTP/1.1 200 OK", "HTTP/1.1", "200", 200, "OK" },
 		{ "HTTP/1.1  200 OK", "HTTP/1.1", "200", 200, "OK" },
 		{ "HTTP/1.1  200  OK", "HTTP/1.1", "200", 200, "OK" },
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 {
 	int n = 0;
 	do {
-		const char* inputLine = testCases[n].input_line;
+		const char* inputLine = validTestCases[n].input_line;
 		if (inputLine == NULL) {
 			break;
 		}
@@ -85,24 +85,24 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		BOOST_CHECK_MESSAGE(TRUE==returnValue,
 				"error return for\n input: " <<inputLine <<
 				"\n log: " <<last_log_result.msg);
-		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(testCases[n].expected_response_msg)),
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(validTestCases[n].expected_response_msg)),
 				"response message mismatch"
-				"\nexpected message: " << testCases[n].expected_response_msg <<
+				"\nexpected message: " << validTestCases[n].expected_response_msg <<
 				"\n actual message  :" << proxyFake->response_msg->str <<
 				"\n line: " << inputLine);
-		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response_version,testCases[n].expected_response_version),
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response_version,validTestCases[n].expected_response_version),
 				"response version mismatch"
-				"\n expected version: " << testCases[n].expected_response_version <<
+				"\n expected version: " << validTestCases[n].expected_response_version <<
 				"\n actual version  :" << proxyFake->response_version <<
 				"\n line: " << inputLine);
-		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response,testCases[n].expected_response),
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response,validTestCases[n].expected_response),
 				"response mismatch"
-				"\n expected response: " << testCases[n].expected_response <<
+				"\n expected response: " << validTestCases[n].expected_response <<
 				"\n actual response  :" << proxyFake->response <<
 				"\n line: " << inputLine);
-		BOOST_CHECK_MESSAGE(proxyFake->response_code == testCases[n].expected_response_code,
+		BOOST_CHECK_MESSAGE(proxyFake->response_code == validTestCases[n].expected_response_code,
 				"response code mismatch"
-				"\n expected code: " << testCases[n].expected_response_code <<
+				"\n expected code: " << validTestCases[n].expected_response_code <<
 				"\n actual code  :" << proxyFake->response_code <<
 				"\n line: " << inputLine);
 
