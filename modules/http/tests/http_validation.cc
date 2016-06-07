@@ -25,8 +25,6 @@
 #include "testutil.h"
 
 
-extern const gchar *last_log;
-
 HttpProxy* new_proxy() {
 	HttpProxy *proxyFake = (HttpProxy *)malloc(sizeof(HttpProxy));
 	const char *session_id = "test_session";
@@ -56,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_split_http_request)
 	proxyFake->request_method=&testGString;
 
 	http_split_request(proxyFake,line,33);
-	BOOST_CHECK(testPlainString[8]=='b');
+	BOOST_CHECK_MESSAGE(testPlainString[8]=='b', "buffer overrun");
 }
 
 typedef struct {
@@ -82,20 +80,35 @@ TestCase testCases[] = {
 
 BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
 {
+	z_log_init("zorp test",3);
+	z_log_change_logspec("http.*:6",NULL);
 	int n = 0;
 	do {
 		const char* inputLine = testCases[n].input_line;
 		if (inputLine == NULL) {
 			break;
 		}
-		printf("%s\n",inputLine);
 		HttpProxy* proxyFake = new_proxy();
+		last_log_result.msg="no log";
 		gboolean returnValue = http_split_request(proxyFake,inputLine,strlen(inputLine));
-		printf("version=%s\n\n",proxyFake->request_version);
-		BOOST_CHECK(TRUE==returnValue);
-		BOOST_CHECK(TRUE==g_string_equal(proxyFake->request_method,g_string_new(testCases[n].expected_method)));
-		BOOST_CHECK(TRUE==g_string_equal(proxyFake->request_url,g_string_new(testCases[n].expected_url)));
-		BOOST_CHECK(0==strcmp(proxyFake->request_version,testCases[n].expected_version));
+		BOOST_CHECK_MESSAGE(TRUE==returnValue,
+				"error return for\n input: " <<inputLine <<
+				"\n log: " <<last_log_result.msg);
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_method,g_string_new(testCases[n].expected_method)),
+				"request method mismatch"
+				"\n expected method: " << testCases[n].expected_method <<
+				"\n actual method  :" << proxyFake->request_method->str <<
+				"\n line: " << inputLine);
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_url,g_string_new(testCases[n].expected_url)),
+				"request url mismatch"
+				"\n expected url: " << testCases[n].expected_url <<
+				"\n actual url  :" << proxyFake->request_url->str <<
+				"\n line: " << inputLine);
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->request_version,testCases[n].expected_version),
+				"request version mismatch"
+				"\nexpected version: " << testCases[n].expected_version <<
+				"\n actual version  :" << proxyFake->request_version <<
+				"\n line: " << inputLine);
 		n++;
 	} while (1);
 }

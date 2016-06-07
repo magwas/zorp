@@ -78,17 +78,34 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		if (inputLine == NULL) {
 			break;
 		}
-		printf("\n%s\n",inputLine);
 		HttpProxy* proxyFake = new_proxy();
 		last_log_result.msg="no log arrived";
 		gboolean returnValue = http_split_response(proxyFake, inputLine, strlen(inputLine));
-		printf("log=%s\n",last_log_result.msg);
-		printf("msg         =%s\n",proxyFake->response_msg->str);
-		BOOST_CHECK(TRUE==returnValue);
-		BOOST_CHECK(0==strcmp(proxyFake->response_version,testCases[n].expected_response_version));
-		BOOST_CHECK(0==strcmp(proxyFake->response,testCases[n].expected_response));
-		BOOST_CHECK(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(testCases[n].expected_response_msg)));
-		BOOST_CHECK(proxyFake->response_code == testCases[n].expected_response_code);
+
+		BOOST_CHECK_MESSAGE(TRUE==returnValue,
+				"error return for\n input: " <<inputLine <<
+				"\n log: " <<last_log_result.msg);
+		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(testCases[n].expected_response_msg)),
+				"response message mismatch"
+				"\nexpected message: " << testCases[n].expected_response_msg <<
+				"\n actual message  :" << proxyFake->response_msg->str <<
+				"\n line: " << inputLine);
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response_version,testCases[n].expected_response_version),
+				"response version mismatch"
+				"\n expected version: " << testCases[n].expected_response_version <<
+				"\n actual version  :" << proxyFake->response_version <<
+				"\n line: " << inputLine);
+		BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response,testCases[n].expected_response),
+				"response mismatch"
+				"\n expected response: " << testCases[n].expected_response <<
+				"\n actual response  :" << proxyFake->response <<
+				"\n line: " << inputLine);
+		BOOST_CHECK_MESSAGE(proxyFake->response_code == testCases[n].expected_response_code,
+				"response code mismatch"
+				"\n expected code: " << testCases[n].expected_response_code <<
+				"\n actual code  :" << proxyFake->response_code <<
+				"\n line: " << inputLine);
+
 		n++;
 	} while (1);
 }

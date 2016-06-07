@@ -22,24 +22,27 @@ typedef struct {
 		if (inputLine == NULL) {\
 			break;\
 		}\
-		printf("\n%s\n",inputLine);\
 		HttpProxy* proxyFake = new_proxy();\
 		last_log_result.msg="no log arrived";\
 		gboolean r = functionCall;\
-		BOOST_CHECK(FALSE==r);\
-		printf("class=%s\nlevel=%u\nlog=%s\nexp=%s\n",\
-				last_log_result.log_class,\
-				last_log_result.log_level,\
+		BOOST_CHECK_MESSAGE(FALSE==r, "expected to fail, but did not\n line:" << inputLine);\
+		BOOST_CHECK_MESSAGE(0==strcmp(\
 				last_log_result.msg,\
-				failingCases[n].expected_message);\
-		BOOST_CHECK(0==strcmp(\
-				last_log_result.msg,\
-				failingCases[n].expected_message));\
-		BOOST_CHECK(0==strcmp(\
+				failingCases[n].expected_message),\
+				"log mismatch"\
+				"\n expected: " << failingCases[n].expected_message  <<\
+				"\n actual  : " << last_log_result.msg);\
+		BOOST_CHECK_MESSAGE(0==strcmp(\
 				last_log_result.log_class,\
-				failingCases[n].expected_class));\
-		BOOST_CHECK(\
+				failingCases[n].expected_class),\
+				"log class mismatch"\
+				"\n expected: " << failingCases[n].expected_class <<\
+				"\n actual  : " << last_log_result.log_class);\
+		BOOST_CHECK_MESSAGE(\
 				last_log_result.log_level == \
-				failingCases[n].expected_loglevel);\
+				failingCases[n].expected_loglevel,\
+				"log level mismatch"\
+				"\n expected: " << failingCases[n].expected_loglevel <<\
+				"\n actual  : " << last_log_result.log_level);\
 		n++;\
 	} while (1);
