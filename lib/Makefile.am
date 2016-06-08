@@ -1,4 +1,6 @@
-SUBDIRS = . zorp
+SUBDIRS = . zorp tests
+
+DIST_SUBDIRS = . zorp tests
 
 LIBS = @LIBZORP_LIBS@
 
@@ -28,5 +30,6 @@ libzorp_la_SOURCES = \
 	kzorp.cc \
 	certchain.cc pyx509chain.cc \
 	session.cc \
-	pyencryption.cc
+	pyencryption.cc\
+	parse.cc
 

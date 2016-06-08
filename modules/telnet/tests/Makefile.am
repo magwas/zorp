@@ -12,7 +12,6 @@ TESTS = $(check_PROGRAMS) $(check_SCRIPTS)
 TEST_EXTENSIONS = .py
 PY_LOG_COMPILER = $(PYTHON)
 
-CPPFLAGS = @MODULES_CPPFLAGS@ -DBOOST_TEST_DYN_LINK=1
 test_telnet_LDADD = ../libtelnet.la @ZORP_LIBS@ -lboost_unit_test_framework
 
 EXTRA_DIST = $(check_SCRIPTS)
