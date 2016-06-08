@@ -400,8 +400,10 @@ def init(names, virtual_name, is_master):
     import __main__
     import SockAddr, Matcher, Rule
     import errno
+    from Encryption import NoneEncryption
 
     Globals.virtual_instance_name = virtual_name
+    Globals.none_encryption = NoneEncryption()
 
     # miscelanneous initialization
     if config.audit.encrypt_certificate_file:

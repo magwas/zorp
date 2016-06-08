@@ -57,6 +57,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Define to 1 if you have the <stdbool.h> header file. */
+#undef HAVE_STDBOOL_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -96,8 +99,7 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Define to the address where bug reports for this package should be sent. */
@@ -117,6 +119,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Predictable random is enabled */
+#undef PREDICTABLE_RANDOM_ENABLED
 
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P

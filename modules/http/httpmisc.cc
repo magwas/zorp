@@ -27,6 +27,7 @@
 
 #include <ctype.h>
 #include <zorp/log.h>
+#include <zorp/parse.h>
 
 #define HTTP_URL_HOST_ESCAPE_CHARS      "/$&+,;=?@ \"'<>#%{}|\\^~[]`"
 #define HTTP_URL_USER_ESCAPE_CHARS      "/$&+,:;=?@ \"'<>#%{}|\\^~[]`"
@@ -107,7 +108,7 @@ http_string_url_decode_hex_byte(guchar *dst, const gchar *src, const gchar **rea
  * single byte destination encoding, e.g. US-ASCII with the 128-255 range
  * defined.
  **/
-static gboolean
+gboolean
 http_string_assign_url_decode(GString *part, gboolean permit_invalid_hex_escape, const gchar *src, gint len, const gchar **reason)
 {
   gchar *dst;
@@ -962,30 +963,6 @@ http_destroy_url(HttpURL *url)
   g_string_free(url->fragment, TRUE);
 }
 
-#define SKIP_SPACES                             \
-  do                                            \
-    {                                           \
-      while (left > 0 && *src == ' ')           \
-        {                                       \
-          src++;                                \
-          left--;                               \
-        }                                       \
-    }                                           \
-  while (0)
-
-#define COPY_SPACE                                              \
-  do                                                            \
-    {                                                           \
-      while (left > 0 && avail > 0 && *src != ' ' && *src)      \
-        {                                                       \
-          *dst++ = *src++;                                      \
-          left--;                                               \
-          avail--;                                              \
-        }                                                       \
-      *dst = 0;                                                 \
-    }                                                           \
-  while (0)
-
 /**
  * http_split_request:
  * @self: HttpProxy instance
@@ -996,71 +973,36 @@ http_destroy_url(HttpURL *url)
  * the resulting items in @self.
  **/
 gboolean
-http_split_request(HttpProxy *self, gchar *line, gint length)
+http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 {
-  gchar *src, *dst;
-  gint left, avail;
 
   z_proxy_enter(self);
   g_string_truncate(self->request_method, 0);
   self->request_flags = -1;
   self->request_version[0] = 0;
   g_string_truncate(self->request_url, 0);
-  src = line;
-  left = length;
-  dst = self->request_method->str;
-  avail = self->request_method->allocated_len;
-  COPY_SPACE;
-  self->request_method->len = strlen(self->request_method->str);
 
-  if (!self->request_method->len || (*src != ' ' && avail == 0))
-    {
-      /*LOG
-        This message indicates that the request method sent by the client is
-        invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Request method empty, or too long; line='%.*s'", left, src);
-      /* request method empty, or request buffer overflow */
-      z_proxy_return(self, FALSE);
-    }
 
-  SKIP_SPACES;
-  avail = self->max_url_length;
-  g_string_truncate(self->request_url, 0);
+  ParseState parseState;
+  parse_start(&parseState,
+  		line, bufferLength,
+  		(ZProxy *)self, HTTP_VIOLATION, 1);
 
-  while (left > 0 && avail > 0 && *src != ' ' && *src)
-    {
-      g_string_append_c(self->request_url, *src++);
-      left--;
-      avail--;
-    }
+  ParseState *pParseState=&parseState;
 
-  if (!self->request_url->str[0] || (*src != ' ' && avail == 0))
-    {
-      /* url missing, or too long */
-      /*LOG
-        This message indicates that the URL sent by the client is invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "URL missing, or too long; line='%.*s'", left, src);
-      z_proxy_return(self, FALSE);
-    }
+  parse_until_space_to_GString_with_error_handling(pParseState, self->request_method, msg_request_have_no_spaces,
+			msg_request_have_no_method, NULL, 0);
 
-  SKIP_SPACES;
-  dst = self->request_version;
-  avail = sizeof(self->request_version) - 1;
-  COPY_SPACE;
+  parse_until_spaces_end_with_error_handling(msg_url_missing, pParseState);
 
-  if (*src != ' ' && avail == 0)
-    {
-      /* protocol version too long */
-      /*LOG
-        This message indicates that the protocol version sent by the client
-        is invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Protocol version missing, or too long; line='%.*s'", left, src);
-      z_proxy_return(self, FALSE);
-    }
+  parse_until_space_to_GString_with_error_handling(pParseState, self->request_url, msg_url_is_not_followed_by_space,
+			msg_request_have_no_method, msg_url_is_too_long, self->max_url_length);
 
+  parse_until_spaces_end_with_error_handling(msg_http_version_missing, pParseState);
+
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->request_version,
+	  		NULL, msg_http_version_missing,
+			msg_http_version_too_long, sizeof(self->request_version)-1);
   /*LOG
     This message reports the processed request details.
   */
@@ -1078,71 +1020,65 @@ http_split_request(HttpProxy *self, gchar *line, gint length)
  * storing the resulting items in @self.
  **/
 gboolean
-http_split_response(HttpProxy *self, gchar *line, gint line_length)
+http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
 {
-  gchar *src, *dst;
-  gint left, avail;
-
   z_proxy_enter(self);
   self->response_version[0] = 0;
   self->response[0] = 0;
   g_string_truncate(self->response_msg, 0);
-  src = line;
-  left = line_length;
-  dst = self->response_version;
-  avail = sizeof(self->response_version) - 1;
-  COPY_SPACE;
+
+  ParseState parseState;
+  parse_start(&parseState,
+  		line, bufferLength,
+  		(ZProxy *)self, HTTP_VIOLATION, 1);
+  ParseState *pParseState=&parseState;
+
+
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->response_version,
+	  		msg_response_code_missing, msg_response_version_missing,
+			msg_response_version_too_long, sizeof(self->response_version)-1);
 
   if (memcmp(self->response_version, "HTTP", 4) != 0)
     {
-      /* no status line */
       /*LOG
         This message indicates that the server sent an invalid response status line.
       */
-      z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%s'", dst);
+      z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%.*s'", bufferLength, line);
       z_proxy_return(self, FALSE);
     }
 
-  if (!self->response_version[0] || (*src != ' ' && avail == 0))
-    {
-      /* response version empty or too long */
-      /*LOG
-        This message indicates that the protocol version sent by the server
-        is invalid.
-      */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response version empty or too long; line='%.*s'", line_length, line);
-      z_proxy_return(self, FALSE);
-    }
+  parse_until_spaces_end_with_error_handling(msg_response_code_missing, pParseState);
 
-  SKIP_SPACES;
-  dst = self->response;
-  avail = sizeof(self->response) - 1;
-  COPY_SPACE;
+  parse_until_space_to_gchar_with_error_handling(pParseState, self->response,
+	  		msg_response_message_missing, msg_response_code_missing,
+			msg_response_code_too_long, sizeof(self->response)-1);
 
-  if (!self->response[0] || (*src != ' ' && left && avail == 0))
-    {
-      /* response code empty or too long */
+  char *endptr;
+  self->response_code = strtol(self->response, &endptr, 10);
+  if (endptr == self->response)
+  {
       /*LOG
         This message indicates that the response code sent by the server is
-        invalid.
+        not a number.
       */
-      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code empty or too long; line='%.*s'", line_length, line);
+      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", bufferLength, line);
       z_proxy_return(self, FALSE);
-    }
+  }
+  if ( (self->response_code > 999) || (self->response_code < 100) )
+	{
+	  /*LOG
+		This message indicates that the response code sent by the server is
+		not three digits
+	  */
+	  z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", bufferLength, line);
+	  z_proxy_return(self, FALSE);
+	}
 
-  self->response_code = atoi(self->response);
-  SKIP_SPACES;
-  avail = 256;
+  parse_until_spaces_end_with_error_handling(msg_response_message_missing, pParseState);
 
-  while (left > 0 && avail > 0)
-    {
-      g_string_append_c(self->response_msg, *src);
-      src++;
-      left--;
-      avail--;
-    }
-
-  *dst = 0;
+  parse_until_end_to_GString_with_error_handling(pParseState, self->response_msg,
+	  		msg_response_message_missing,
+			NULL, 255);
 
   /*LOG
     This message reports the processed response details.
@@ -1151,8 +1087,6 @@ http_split_response(HttpProxy *self, gchar *line, gint line_length)
   z_proxy_return(self, TRUE);
 }
 
-#undef SKIP_SPACES
-#undef COPY_SPACE
 
 /**
  * http_parse_version:

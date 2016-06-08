@@ -1195,8 +1195,6 @@ class AbstractTelnetProxy(Proxy):
 
         applyState(self, state)
 
-        if (self.enable_pattern_matching):
-            self.serverUsernameSet()
 
         return TRUE
 

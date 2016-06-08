@@ -286,7 +286,7 @@ class MasterSession(AbstractSession):
         self.target_local = getattr(kwargs, "target_local", None)
         self.target_zone = getattr(kwargs, "target_zone", ())
 
-        self.instance_id = 0
+        self.instance_id = kwargs.pop("instance_id", 0)
         for arg_name,value in kwargs.items():
             setattr(self, arg_name, value)
             log(None, CORE_DEBUG, 8,

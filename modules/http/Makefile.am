@@ -6,7 +6,7 @@ SUBDIRS += . messages tests
 DIST_SUBDIRS += . messages tests
 
 pkgdatadir = @ZORP_PYTHON_DIR@
-pkglibdir = @zorp_libdir@
+pkglibdir = @libdir@/zorp
 LIBS = @MODULES_LIBS@
 CPPFLAGS = @MODULES_CPPFLAGS@
 AM_CFLAGS = @CFLAGS@ -W
@@ -16,6 +16,6 @@ pkgdata_DATA = Http.py
 pkglib_LTLIBRARIES = libhttp.la
 
 libhttp_la_SOURCES = http.cc httpproto.cc httpfltr.cc httpfltr.h httpmisc.cc \
-                     httphdr.cc httpftp.cc http.h httpcommon.h
+                     httphdr.cc httpftp.cc http.h httpcommon.h messages.cc
 
 EXTRA_DIST =  $(pkgdata_DATA)

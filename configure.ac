@@ -25,7 +25,7 @@ dnl ***************************************************************************
 dnl Dependencies
 
 GLIB_MIN_VERSION="2.32.0"
-ZORPLL_MIN_VERSION="6.0.3.0"
+ZORPLL_MIN_VERSION="6.0.8.0"
 ZORPLIC_MIN_VERSION="6.0.3.0"
 ZORPMISC_MIN_VERSION="6.0.3.0"
 OPENSSL_MIN_VERSION="1.0.1"
@@ -113,6 +113,10 @@ AC_ARG_ENABLE(prefork,
               [  --enable-prefork             Enable prefork],,
 	      enable_prefork=no)
 
+AC_ARG_ENABLE(predictable_random,
+              [  --enable-predictable-random             Enable predictable random],,
+        enable_predictable_random=no)
+
 AC_ARG_WITH(pidfiledir,
               [  --with-pidfiledir=[path]   Path to run directory where pidfile is stored],
               pidfiledir="$with_pidfiledir",
@@ -122,6 +126,7 @@ ZORP_MUNIN_CONF_DIR="${sysconfdir}/munin/plugin-conf.d"
 ZORP_NAGIOS_CONF_DIR="${sysconfdir}/nagios/nrpe.d"
 ZORP_SUDOERSD_CONF_DIR="${sysconfdir}/sudoers.d"
 sysconfdir="${sysconfdir}/zorp"
+#datadir='${prefix}/share/zorp'
 libdir='${prefix}/lib'
 
 dnl ***************************************************************************
@@ -165,16 +170,12 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
   AC_MSG_FAILURE(['$CXX $CXXFLAGS' does not accept full ISO C++11]))
 
 AM_PROG_LIBTOOL
-AC_PATH_PROG(GPERF, gperf)
-if test "x$GPERF" = "x"; then
-	AC_ERROR(No gperf found)
-fi
 
 dnl ***************************************************************************
 dnl Checks for header files.
 
 
-AC_CHECK_HEADERS(sys/capability.h sys/prctl.h sys/syscall.h limits.h)
+AC_CHECK_HEADERS(sys/capability.h sys/prctl.h sys/syscall.h limits.h stdbool.h stdint.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_CACHE_CHECK(for MSG_PROXY, blb_cv_msg_proxy,
@@ -201,6 +202,7 @@ dnl Checks for library functions.
 AC_CHECK_LIB(socket, setsockopt, SOCK_LIBS="$SOCK_LIBS -lsocket")
 AC_CHECK_LIB(xnet, inet_addr, SOCK_LIBS="$SOCK_LIBS -lxnet")
 AC_CHECK_LIB(nsl, gethostbyname, SOCK_LIBS="$SOCK_LIBS -lnsl")
+AC_CHECK_LIB(boost_unit_test_framework, main, enable_boost="yes", echo "no boost";exit 1)
 
 dnl Python might required -ldl, -lutil & -lm
 AC_CHECK_LIB(rt, aio_read, PYTHON_DEPS="$PYTHON_DEPS -lrt")
@@ -251,14 +253,14 @@ PKG_CHECK_MODULES(ZORPLL, zorplibll >= $ZORPLL_MIN_VERSION,,
 PKG_CHECK_MODULES(OPENSSL, openssl >= $OPENSSL_MIN_VERSION,,
         AC_MSG_ERROR(Cannot find OpenSSL library version >= $OPENSSL_MIN_VERSION: is pkg-config in path?))
 
-PKG_CHECK_MODULES(PYTHON, python-2.7 >= $PYTHON_MIN_VERSION,,
+PKG_CHECK_MODULES(LIBPYTHON, python-2.7 >= $PYTHON_MIN_VERSION,,
 	AC_MSG_ERROR(Cannot find Python library version >= $PYTHON_MIN_VERSION: is pkg-config in path?))
-PKG_CHECK_MODULES(PYTHON, python-2.7 < $PYTHON_MAX_VERSION,,
+PKG_CHECK_MODULES(LIBPYTHON, python-2.7 < $PYTHON_MAX_VERSION,,
 	AC_MSG_ERROR(Cannot find Python library version >= $PYTHON_MAX_VERSION: is pkg-config in path?))
 
 
 
-AM_CONDITIONAL(ALERTING_ENABLED, test x$enable_alerting = xyes)
+
 
 if test "x$ac_cv_func_gethostbyname_r" = "xyes"; then
 dnl	if test "`uname -s`" = "Linux"; then
@@ -320,7 +322,7 @@ zorpeval()
 }
 
 ZORP_MUNIN_DIR="${prefix}/share/munin/plugins"
-ZORP_NAGIOS_DIR="${libdir}/nagios/plugins"
+ZORP_NAGIOS_DIR="${prefix}/lib/nagios/plugins"
 ZORP_PYTHON_DIR="${pythondir}/Zorp"
 ZORPCTL_PYTHON_DIR="${pythondir}/zorpctl"
 
@@ -391,30 +393,34 @@ AC_DEFINE_UNQUOTED(ENABLE_IPV6, `enable_value $enable_ipv6`, [Enable IPv6 suppor
 AC_DEFINE_UNQUOTED(ENABLE_PREFORK, `enable_value $enable_prefork`, [Enable prefork support])
 
 # CPPFLAGS as supplied by dependencies
-DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $PYTHON_CFLAGS $OPENSSL_CFLAGS $LIBADPALERTING_CFLAGS"
+DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $LIBPYTHON_CFLAGS $OPENSSL_CFLAGS $LIBADPALERTING_CFLAGS"
 # CPPFLAGS defined to access local header files in addition to dependencies
 CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS"
 # common libraries (dependencies)
 LIBPROXY_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
-MODULES_CPPFLAGS="$LIBPROXY_CPPFLAGS"
+MODULES_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
 
 # Dependencies outside the source tree
-DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $PYTHON_LIBS $PYTHON_DEPS $COREDUMP_LIBS $OPENSSL_LIBS"
+DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $LIBPYTHON_LIBS $LIBPYTHON_DEPS $COREDUMP_LIBS $OPENSSL_LIBS"
 # zorp library libs
-LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $PYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS"
+LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $LIBPYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS"
 # Zorp main program
 ZORP_LIBS="-L\$(top_builddir)/lib/ -lzorp $ZORPLL_LIBS $ZORPMISC_LIBS $ZORPLIC_LIBS $OPENSSL_LIBS $LIBADPALERTING_LIBS"
 # libraries to link the zorp modules against (implicitly linked
 # against the main binary, those does not need to be listed here
-MODULES_LIBS="-L\$(top_builddir)/lib/ -lzorp -L\$(top_builddir)/libproxy/ -lzorpproxy $ZORPLL_LIBS $PYTHON_LIBS"
+MODULES_LIBS="-L\$(top_builddir)/lib/ -lzorp -L\$(top_builddir)/libproxy/ -lzorpproxy $ZORPLL_LIBS $LIBPYTHON_LIBS"
 # module test program libs
-MODULETESTS_LIBS="$MODULES_LIBS $ZORP_LIBS $PYTHON_LIBS"
+MODULETESTS_LIBS="$MODULES_LIBS $ZORP_LIBS $LIBPYTHON_LIBS"
 
 dnl ***************************************************************************
 dnl Coverage flags and libs
 if test "x$enable_coverage" = "xyes"; then
         LDFLAGS="$LDFLAGS -fprofile-arcs -lgcov"
         CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+fi
+
+if test "x$enable_predictable_random" = "xyes"; then
+        AC_DEFINE(PREDICTABLE_RANDOM_ENABLED, 1, [Predictable random is enabled])
 fi
 
 AC_SUBST(DEPS_CPPFLAGS)
@@ -464,8 +470,6 @@ License: $ZORP_PACKAGE_LICENSE
 
 EOF
 
-AC_CONFIG_COMMANDS([runtest-exe], [chmod +x tests/python/runtest.sh])
-
 AC_SUBST(LIBZORP_LT_RELEASE)
 AC_SUBST(LIBZORP_LT_COMPAT_BRANCH)
 AC_SUBST(LIBZORP_LT_COMPAT_PL)
@@ -479,6 +483,8 @@ AC_SUBST(PYTHON_MIN_VERSION)
 AC_SUBST(CURRDATE)
 AC_SUBST(pidfiledir)
 
+AC_CONFIG_LINKS([pylib/Zorp/__init__.py:pylib/Zorp/__init__.py])
+
 AC_CONFIG_FILES(
 Makefile
 debian/Makefile
@@ -486,6 +492,7 @@ doc/Makefile
 doc/examples/Makefile
 doc/man/Makefile
 lib/Makefile
+lib/tests/Makefile
 lib/zorp/Makefile
 libproxy/Makefile
 libproxy/zorp/Makefile
@@ -517,10 +524,9 @@ pylib/Zorp/Config.py
 pylib/Zorp/Makefile
 scripts/Makefile
 tests/Makefile
-tests/python/runtest.sh
 tests/python/Makefile
-tests/tools/Makefile
 tests/unit/Makefile
+tests/unit/helpers/Makefile
 tests/zorpctl/Makefile
 zorp/Makefile
 zorpctl/Makefile

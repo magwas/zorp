@@ -11,4 +11,4 @@ pkgdata_DATA = Auth.py AuthDB.py Base.py Core.py Chainer.py Common.py \
 	Instance.py InstancesConf.py \
 	ResolverCache.py FileLock.py
 
-EXTRA_DIST = $(pkgdata_DATA)
+EXTRA_DIST = $(pkgdata_DATA) Http.py AnyPy.py Plug.py

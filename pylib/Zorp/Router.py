@@ -223,7 +223,12 @@ class AbstractRouter(object):
         else:
             if local_port != 0:
                 local_addr = session.client_address.clone(FALSE)
-                local_addr.ip = 0
+                if isinstance(local_addr, SockAddrInetType):
+                    local_addr.ip = 0
+                elif isinstance(local_addr, SockAddrInet6Type):
+                    local_addr.ip = [0] * 8
+                else:
+                    raise ValueError, "Invalid client_address type (%s)" % type(local_addr)
                 local_addr_port = local_port
             else:
                 local_addr = None

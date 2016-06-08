@@ -1,11 +1,10 @@
-noinst_SCRIPTS = runtest.sh
+check_SCRIPTS = test_inetdomain.py test_zone.py test_matcher.py test_dispatch.py test_nat.py test_log.py test_session.py test_keybridge.py
 
-TESTS = runalltests.sh
+AM_TESTS_ENVIRONMENT = G_DEBUG='fatal_warnings gc-friendly'; G_SLICE='always-malloc'; PYTHONPATH=${top_srcdir}/pylib:${top_builddir}/pylib/Zorp; export G_DEBUG; export G_SLICE; export PYTHONPATH;
 
-EXTRA_DIST = $(TESTS) runtest.sh.in test_inetdomain.py test_zone.py test_matcher.py test_dispatch.py test_nat.py test_log.py test_session.py test_keybridge.py
+TEST_EXTENSIONS = .py
+PY_LOG_COMPILER = $(top_builddir)/zorp/zorp
+AM_PY_LOG_FLAGS = -F --no-syslog --no-caps --user `id --name --user`  --group `id --name --group` -p
 
-.PHONY: mkzorp
-mkzorp:
-	make -C ../../zorp
-
-runtest.sh: mkzorp
+TESTS = $(check_SCRIPTS)
+EXTRA_DIST = $(check_SCRIPTS)

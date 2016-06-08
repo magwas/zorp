@@ -52,6 +52,7 @@ external_authorization_waiting_lock = threading.Lock()
 external_authorization_waiting = {}
 kzorp_available = False
 encryption_policies = {}
+none_encryption = None
 detectors = {}
 policy_zones_reload_lock = threading.Lock()
 virtual_instance_name = ''
