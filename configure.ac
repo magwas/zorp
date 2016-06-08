@@ -492,6 +492,7 @@ doc/Makefile
 doc/examples/Makefile
 doc/man/Makefile
 lib/Makefile
+lib/tests/Makefile
 lib/zorp/Makefile
 libproxy/Makefile
 libproxy/zorp/Makefile
@@ -525,6 +526,7 @@ scripts/Makefile
 tests/Makefile
 tests/python/Makefile
 tests/unit/Makefile
+tests/unit/helpers/Makefile
 tests/zorpctl/Makefile
 zorp/Makefile
 zorpctl/Makefile

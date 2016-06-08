@@ -1,7 +1,10 @@
+#define LOG_RESULT_LENGTH 200
+
 typedef struct {
 	const gchar *msg;
 	const gchar *log_class;
 	int log_level;
+	char formatted_msg[LOG_RESULT_LENGTH];
 } LogResult;
 
 extern LogResult last_log_result;

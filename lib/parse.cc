@@ -21,10 +21,12 @@ void parse_start(ParseState *pParseState,
 {
 	pParseState->length = bufferLength;
 	pParseState->stringAt = line;
-	pParseState->proxy = proxy;
-	pParseState->error_class = error_class;
-	pParseState->error_level = error_level;
-	pParseState->error_class = error_class;
+	pParseState->spaceAt = line;
+	pParseState->logParams.proxy = proxy;
+	pParseState->logParams.error_class = error_class;
+	pParseState->logParams.error_level = error_level;
+	pParseState->logParams.line = line;
+	pParseState->logParams.bufferLength = bufferLength;
 }
 
 int _parseToSpace(ParseState* pParseState,
@@ -40,7 +42,7 @@ int _parseToSpace(ParseState* pParseState,
 	if (NULL == pParseState->spaceAt) {
 		if (noSpaceAfterMsg)
 		{
-			pParseState->error_message = noSpaceAfterMsg;
+			pParseState->logParams.error_message = noSpaceAfterMsg;
 			return FALSE;
 		} else {
 			pParseState->spaceAt = pParseState->stringAt + pParseState->length;
@@ -49,17 +51,17 @@ int _parseToSpace(ParseState* pParseState,
 	segmentLength = pParseState->spaceAt - pParseState->stringAt;
 	if (zeroLengthMsg && 0 == segmentLength)
 	{
-		pParseState->error_message = zeroLengthMsg;
+		pParseState->logParams.error_message = zeroLengthMsg;
 		return FALSE;
 	}
 	if (tooLongMsg && (maxLength < segmentLength))
 	{
-		pParseState->error_message = tooLongMsg;
+		pParseState->logParams.error_message = tooLongMsg;
 		return FALSE;
 	}
 	pParseState->length -= segmentLength;
 	*segmentLengthPtr = segmentLength;
-	pParseState->error_message = NULL;
+	pParseState->logParams.error_message = NULL;
 	return TRUE;
 }
 
@@ -114,8 +116,12 @@ int parse_until_spaces_end(const char* noStringReached, ParseState* pParseState)
 	pParseState->stringAt = memcspn(pParseState->spaceAt, ' ',
 			pParseState->length);
 	if (NULL == pParseState->stringAt) {
-		pParseState->error_message = noStringReached;
-		return FALSE;
+		if(noStringReached) {
+			pParseState->logParams.error_message = noStringReached;
+			return FALSE;
+		} else {
+			pParseState->stringAt = pParseState->spaceAt + pParseState->length;
+		}
 	}
 	size_t segmentLength2 = pParseState->stringAt - pParseState->spaceAt;
 	pParseState->length -= segmentLength2;

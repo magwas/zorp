@@ -1,4 +1,6 @@
-SUBDIRS = . zorp
+SUBDIRS = . zorp tests
+
+DIST_SUBDIRS = . zorp tests
 
 LIBS = @LIBZORP_LIBS@
 
