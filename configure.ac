@@ -526,7 +526,6 @@ scripts/Makefile
 tests/Makefile
 tests/python/Makefile
 tests/unit/Makefile
-tests/unit/helpers/Makefile
 tests/zorpctl/Makefile
 zorp/Makefile
 zorpctl/Makefile
