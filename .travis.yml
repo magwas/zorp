@@ -8,7 +8,7 @@ compiler:
 before_script:
   - sudo add-apt-repository -y ppa:dns/gnu
   - sudo apt-get update
-  - sudo apt-get install --yes devscripts equivs
+  - sudo apt-get install --yes devscripts equivs libboost-test-dev
   - sudo mk-build-deps -i -r -t " apt-get --no-install-recommends --yes"
 
 script:
