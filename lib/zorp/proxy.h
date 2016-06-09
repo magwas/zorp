@@ -190,7 +190,7 @@ public:
   #define LOG_MSG(format) format
 #else
 
-  #define LOG_MSG(format) "(%s): " format
+  #define LOG_MSG(format) (format)
 
 #define z_log2(session_id, class_, level, format, args...) \
   do \

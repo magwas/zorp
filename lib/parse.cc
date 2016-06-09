@@ -1,6 +1,27 @@
 #include <zorp/zorp.h>
 #include <zorp/proxy.h>
 #include <zorp/parse.h>
+#include <boost/format.hpp>
+
+class ParserException: public std::exception
+{
+public:
+	ParserException(const char *error_message,
+			const char *line, gint bufferLength) {
+		if(-1 == asprintf(&message,"%s; line='%.*s'", error_message, bufferLength, line))
+		{
+			message = (char *)"error occured while formatting message";
+		}
+	}
+	~ParserException() {
+		free(message);
+	}
+	const char* what() const _GLIBCXX_USE_NOEXCEPT override {
+		return this->message;
+	}
+private:
+	char *message;
+};
 
 const char * memcspn(const char *segment, char segmentChar, signed int length) {
 	while (length > 0 && (*segment == segmentChar)) {
@@ -14,22 +35,16 @@ const char * memcspn(const char *segment, char segmentChar, signed int length) {
 
 void parse_start(ParseState *pParseState,
 		const gchar* line,
-		gint bufferLength,
-		ZProxy *proxy,
-		const char *error_class,
-		gint error_level)
+		gint bufferLength)
 {
 	pParseState->length = bufferLength;
 	pParseState->stringAt = line;
 	pParseState->spaceAt = line;
-	pParseState->logParams.proxy = proxy;
-	pParseState->logParams.error_class = error_class;
-	pParseState->logParams.error_level = error_level;
-	pParseState->logParams.line = line;
-	pParseState->logParams.bufferLength = bufferLength;
+	pParseState->origBuffer.line = line;
+	pParseState->origBuffer.bufferLength = bufferLength;
 }
 
-int _parseToSpace(ParseState* pParseState,
+void _parseToSpace(ParseState* pParseState,
 		const char* noSpaceAfterMsg,
 		const char* zeroLengthMsg,
 		const char* tooLongMsg,
@@ -42,8 +57,7 @@ int _parseToSpace(ParseState* pParseState,
 	if (NULL == pParseState->spaceAt) {
 		if (noSpaceAfterMsg)
 		{
-			pParseState->logParams.error_message = noSpaceAfterMsg;
-			return FALSE;
+			throw ParserException(noSpaceAfterMsg, pParseState->origBuffer.line, pParseState->origBuffer.bufferLength);
 		} else {
 			pParseState->spaceAt = pParseState->stringAt + pParseState->length;
 		}
@@ -51,80 +65,61 @@ int _parseToSpace(ParseState* pParseState,
 	segmentLength = pParseState->spaceAt - pParseState->stringAt;
 	if (zeroLengthMsg && 0 == segmentLength)
 	{
-		pParseState->logParams.error_message = zeroLengthMsg;
-		return FALSE;
+		throw ParserException(zeroLengthMsg, pParseState->origBuffer.line, pParseState->origBuffer.bufferLength);
 	}
 	if (tooLongMsg && (maxLength < segmentLength))
 	{
-		pParseState->logParams.error_message = tooLongMsg;
-		return FALSE;
+		throw ParserException(tooLongMsg, pParseState->origBuffer.line, pParseState->origBuffer.bufferLength);
 	}
 	pParseState->length -= segmentLength;
 	*segmentLengthPtr = segmentLength;
-	pParseState->logParams.error_message = NULL;
-	return TRUE;
 }
 
-int parse_until_space_to_GString(ParseState* pParseState, GString* outputString,
+void parse_until_space_to_GString(ParseState* pParseState, GString* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength)
 {
 	size_t segmentLength;
-	if(FALSE == _parseToSpace(pParseState, noSpaceAfterMsg,
+	_parseToSpace(pParseState, noSpaceAfterMsg,
 			zeroLengthMsg, tooLongMsg,
-			maxLength, &segmentLength))
-	{
-		return FALSE;
-	}
+			maxLength, &segmentLength);
 	g_string_append_len(outputString, pParseState->stringAt, segmentLength);
-	return TRUE;
 }
 
-int parse_until_end_to_GString(ParseState* pParseState, GString* outputString,
+void parse_until_end_to_GString(ParseState* pParseState, GString* outputString,
 		const char* zeroLengthMsg,
 		size_t maxLength)
 {
 	size_t segmentLength;
 	size_t length = pParseState->length;
-	if(FALSE == _parseToSpace(pParseState, NULL,
+	_parseToSpace(pParseState, NULL,
 			zeroLengthMsg, NULL,
-			maxLength, &segmentLength))
-	{
-		return FALSE;
-	}
+			maxLength, &segmentLength);
 	g_string_append_len(outputString, pParseState->stringAt, std::min(length, maxLength+1));
-	return TRUE;
 }
 
-int parse_until_space_to_gchar(ParseState* pParseState, gchar* outputString,
+void parse_until_space_to_gchar(ParseState* pParseState, gchar* outputString,
 		const char* noSpaceAfterMsg, const char* zeroLengthMsg,
 		const char* tooLongMsg, size_t maxLength)
 {
 	size_t segmentLength;
-	if(FALSE == _parseToSpace(pParseState, noSpaceAfterMsg,
+	_parseToSpace(pParseState, noSpaceAfterMsg,
 			zeroLengthMsg, tooLongMsg,
-			maxLength, &segmentLength))
-	{
-		return FALSE;
-	}
+			maxLength, &segmentLength);
 	strncpy(outputString, pParseState->stringAt, segmentLength);
 	outputString[segmentLength]=0;
-	return TRUE;
 }
 
-int parse_until_spaces_end(const char* noStringReached, ParseState* pParseState) {
+void parse_until_spaces_end(const char *noStringReached, ParseState* pParseState) {
 	pParseState->stringAt = memcspn(pParseState->spaceAt, ' ',
 			pParseState->length);
 	if (NULL == pParseState->stringAt) {
 		if(noStringReached) {
-			pParseState->logParams.error_message = noStringReached;
-			return FALSE;
+			throw ParserException(noStringReached, pParseState->origBuffer.line, pParseState->origBuffer.bufferLength);
 		} else {
 			pParseState->stringAt = pParseState->spaceAt + pParseState->length;
 		}
 	}
 	size_t segmentLength2 = pParseState->stringAt - pParseState->spaceAt;
 	pParseState->length -= segmentLength2;
-	return TRUE;
 }
-

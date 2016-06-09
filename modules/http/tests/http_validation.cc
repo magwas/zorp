@@ -170,19 +170,21 @@ const char* extralongString2 = "GET "
 		" HTTP/1.0"
 		;
 FailingTestCase failingCases[] = {
-		{ " http://example.com HTTP/1.0", "(%s): Request have no method; line='%.*s'",
+		{ " http://example.com HTTP/1.0", "(test_session): Request have no method; line=' http://example.com HTTP/1.0'",
 		HTTP_VIOLATION, 1},
-		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(%s): Request have no spaces; line='%.*s'",
+		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(test_session): Request have no spaces; line='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
 		HTTP_VIOLATION, 1},
-		{ "GET ", "(%s): URL missing; line='%.*s'",
+		{ "GET ", "(test_session): URL missing; line='GET '",
 		HTTP_VIOLATION, 1},
-		{ extralongString, "(%s): URL is not followed by space; line='%.*s'",
+		{ extralongString,
+				"(test_session): URL is not followed by space; line='GET aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		HTTP_VIOLATION, 1},
-		{ extralongString2, "(%s): URL is too long; line='%.*s'",
+		{ extralongString2,
+				"(test_session): URL is too long; line='GET aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		HTTP_VIOLATION, 1},
-		{ "GET http://example.com  aaaaaaaaaaaaaaaa", "(%s): http version is too long; line='%.*s'",
+		{ "GET http://example.com  aaaaaaaaaaaaaaaa", "(test_session): http version is too long; line='GET http://example.com  aaaaaaaaaaaaaaaa'",
 		HTTP_VIOLATION, 1},
-		{ "GET http://example.com  1234567890abcdef ", "(%s): http version is too long; line='%.*s'",
+		{ "GET http://example.com  1234567890abcdef ", "(test_session): http version is too long; line='GET http://example.com  1234567890abcdef '",
 		HTTP_VIOLATION, 1},
 		{NULL, NULL, NULL, 9}
 };
@@ -190,5 +192,4 @@ FailingTestCase failingCases[] = {
 BOOST_AUTO_TEST_CASE(test_incorrect_line_causes_error_return)
 {
 	testErrorCases(http_split_request(proxyFake,inputLine,strlen(inputLine)));
-
 }

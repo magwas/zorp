@@ -80,11 +80,8 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 		}
 		HttpProxy* proxyFake = new_proxy();
 		last_log_result.msg="no log arrived";
-		gboolean returnValue = http_split_response(proxyFake, inputLine, strlen(inputLine));
+		http_split_response(proxyFake, inputLine, strlen(inputLine));
 
-		BOOST_CHECK_MESSAGE(TRUE==returnValue,
-				"error return for\n input: " <<inputLine <<
-				"\n log: " <<last_log_result.msg);
 		BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(validTestCases[n].expected_response_msg)),
 				"response message mismatch"
 				"\nexpected message: " << validTestCases[n].expected_response_msg <<
@@ -112,34 +109,34 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
 
 FailingTestCase failingCases[] = {
 		{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				"(%s): Response code is missing; line='%.*s'",
+				"(test_session): Response code is missing; line='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
 				HTTP_VIOLATION, 1},
 		{ "aaaa 200 OK",
-				"(%s): Invalid HTTP status line; line='%.*s'",
+				"(test_session): Invalid HTTP status line; line='aaaa 200 OK'",
 				HTTP_RESPONSE, 6},
 		{ "HTTP",
-				"(%s): Response code is missing; line='%.*s'",
+				"(test_session): Response code is missing; line='HTTP'",
 				HTTP_VIOLATION, 1},
 		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				"(%s): Response code is missing; line='%.*s'",
+				"(test_session): Response code is missing; line='HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
 				HTTP_VIOLATION, 1},
 		{ "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK",
-				"(%s): Response version is too long; line='%.*s'",
+				"(test_session): Response version is too long; line='HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK'",
 				HTTP_VIOLATION, 1},
 		{ "HTTP/1.1 20 OK",
-				"(%s): Response code is not three digits; line='%.*s'",
+				"(test_session): Response code is not three digits; line='HTTP/1.1 20 OK'",
 				HTTP_VIOLATION, 1},
 		{ "HTTP/1.1 20f OK",
-				"(%s): Response code is not three digits; line='%.*s'",
+				"(test_session): Response code is not three digits; line='HTTP/1.1 20f OK'",
 				HTTP_VIOLATION, 1},
 		{ "HTTP/1.0 aaa OK",
-				"(%s): Response code is not a number; line='%.*s'",
+				"(test_session): Response code is not a number; line='HTTP/1.0 aaa OK'",
 				HTTP_VIOLATION, 1},
 		{ "HTTP 2001 OK",
-				"(%s): Response code is too long; line='%.*s'",
+				"(test_session): Response code is too long; line='HTTP 2001 OK'",
 				HTTP_VIOLATION, 1},
 		{ "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				"(%s): Response message is missing; line='%.*s'",
+				"(test_session): Response message is missing; line='HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
 				HTTP_VIOLATION, 1},
 		{NULL, NULL, NULL, 0}
 };

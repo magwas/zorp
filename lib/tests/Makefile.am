@@ -15,8 +15,10 @@ check_LTLIBRARIES = libtestutil.la
 
 libtestutil_la_SOURCES = testutil.cc
 
+t_SOURCES = t.cc
+
 TESTS = 
 TESTS += log_test
 TESTS += parse_test
 
-check_PROGRAMS = log_test parse_test
+check_PROGRAMS = log_test parse_test t

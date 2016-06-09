@@ -30,11 +30,12 @@ typedef struct {
 		gboolean r = functionCall;\
 		BOOST_CHECK_MESSAGE(FALSE==r, "expected to fail, but did not\n line:" << inputLine);\
 		BOOST_CHECK_MESSAGE(0==strcmp(\
-				last_log_result.msg,\
+				last_log_result.formatted_msg,\
 				failingCases[n].expected_message),\
 				"log mismatch"\
 				"\n expected: " << failingCases[n].expected_message  <<\
-				"\n actual  : " << last_log_result.msg);\
+				"|\n actual  : " << last_log_result.formatted_msg<<\
+				"|");\
 		BOOST_CHECK_MESSAGE(0==strcmp(\
 				last_log_result.log_class,\
 				failingCases[n].expected_class),\
