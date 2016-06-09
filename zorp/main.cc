@@ -583,8 +583,8 @@ main(int argc, char *argv[])
   if (!z_python_init())
     {
       /*LOG
-	This message indicates that Zorp was unable to initialize the Python engine.
-	It is likely that your installation is broken. Check your packages and there version number.
+    This message indicates that Zorp was unable to initialize the Python engine.
+    It is likely that your installation is broken. Check your packages and there version number.
        */
       z_llog(CORE_ERROR, 0, "Error initializing Python policy engine;");
       fprintf(stderr, "%s: Error initializing Python policy engine\n", instance_name);

@@ -651,21 +651,21 @@ z_policy_event(PyObject *handler, const char *name, PyObject *args, gchar *sessi
   if (res)
     {
       if (PyInt_Check(res))
-	{
-	  c_res = PyInt_AsLong(res);
-	  Py_XDECREF(res);
-	  if (c_res != ZV_UNSPEC)
-	    {
-	      Py_XDECREF(args);
-	      return c_res;
-	    }
-	}
+    {
+      c_res = PyInt_AsLong(res);
+      Py_XDECREF(res);
+      if (c_res != ZV_UNSPEC)
+        {
+          Py_XDECREF(args);
+          return c_res;
+        }
+    }
       else
-	{
-	  PyErr_Format(PyExc_TypeError, "preProcessEvent() handlers should return an int.");
-	  PyErr_Print(); /* produce a backtrace, and handle it immediately */
-	  Py_XDECREF(res);
-	}
+    {
+      PyErr_Format(PyExc_TypeError, "preProcessEvent() handlers should return an int.");
+      PyErr_Print(); /* produce a backtrace, and handle it immediately */
+      Py_XDECREF(res);
+    }
     }
   else
     if (called)
@@ -675,21 +675,21 @@ z_policy_event(PyObject *handler, const char *name, PyObject *args, gchar *sessi
   if (res)
     {
       if (PyInt_Check(res))
-	{
-	  c_res = PyInt_AsLong(res);
-	  Py_XDECREF(res);
-	  if (c_res != ZV_UNSPEC)
-	    {
-	      Py_XDECREF(args);
-	      return c_res;
-	    }
-	}
+    {
+      c_res = PyInt_AsLong(res);
+      Py_XDECREF(res);
+      if (c_res != ZV_UNSPEC)
+        {
+          Py_XDECREF(args);
+          return c_res;
+        }
+    }
       else
-	{
-	  PyErr_Format(PyExc_TypeError, "Event handlers should return an int: %s", name);
-	  PyErr_Print(); /* produce a backtrace, and handle it immediately */
-	  Py_XDECREF(res);
-	}
+    {
+      PyErr_Format(PyExc_TypeError, "Event handlers should return an int: %s", name);
+      PyErr_Print(); /* produce a backtrace, and handle it immediately */
+      Py_XDECREF(res);
+    }
     }
   else
     if (called)
@@ -698,17 +698,17 @@ z_policy_event(PyObject *handler, const char *name, PyObject *args, gchar *sessi
   if (res)
     {
       if (PyInt_Check(res))
-	{
-	  c_res = PyInt_AsLong(res);
-	  Py_XDECREF(res);
-	  return c_res;
-	}
+    {
+      c_res = PyInt_AsLong(res);
+      Py_XDECREF(res);
+      return c_res;
+    }
       else
-	{
-	  PyErr_Format(PyExc_TypeError, "postProcessEvent() handlers should return an int.");
-	  PyErr_Print(); /* produce a backtrace, and handle it immediately */
-	  Py_XDECREF(res);
-	}
+    {
+      PyErr_Format(PyExc_TypeError, "postProcessEvent() handlers should return an int.");
+      PyErr_Print(); /* produce a backtrace, and handle it immediately */
+      Py_XDECREF(res);
+    }
     }
   else
     if (called)
@@ -1142,8 +1142,8 @@ z_policy_load(ZPolicy *self)
   else
     {
       /*LOG
-	This message indicates that Zorp was unable to open the policy file.
-	Check the permissions of your policy file.
+    This message indicates that Zorp was unable to open the policy file.
+    Check the permissions of your policy file.
        */
       z_log(NULL, CORE_ERROR, 0, "Error opening policy file; filename='%s'", self->policy_filename);
     }
@@ -1151,8 +1151,8 @@ z_policy_load(ZPolicy *self)
   if (res == -1)
     {
       /*LOG
-	This message indicates that Zorp was unable to parse the policy file.
-	Check the logs for further information on where the error occurred in the policy.
+    This message indicates that Zorp was unable to parse the policy file.
+    Check the logs for further information on where the error occurred in the policy.
        */
       z_log(NULL, CORE_ERROR, 0, "Error parsing policy file; filename='%s'", self->policy_filename);
       /* let the error message out */

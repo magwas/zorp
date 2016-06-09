@@ -40,7 +40,7 @@
 /* general limits applied to headers, etc. */
 #define HTTP_MAX_LINE           32768
 #define HTTP_MAX_URL            32768
-#define HTTP_BLOCKSIZE		4096
+#define HTTP_BLOCKSIZE        4096
 #define HTTP_MAX_EMPTY_REQUESTS 3
 
 /* error tags */
@@ -86,14 +86,14 @@ typedef enum _HttpResponseVerdict
 #define HTTP_HDR_INSERT        104
 #define HTTP_HDR_REPLACE       105
 
-#define HTTP_STK_NONE		1
-#define HTTP_STK_DATA		2
-#define HTTP_STK_MIME		3
+#define HTTP_STK_NONE        1
+#define HTTP_STK_DATA        2
+#define HTTP_STK_MIME        3
 
 /* connection mode */
-#define HTTP_CONNECTION_CLOSE		0
-#define HTTP_CONNECTION_KEEPALIVE	1
-#define HTTP_CONNECTION_UNKNOWN		2
+#define HTTP_CONNECTION_CLOSE        0
+#define HTTP_CONNECTION_KEEPALIVE    1
+#define HTTP_CONNECTION_UNKNOWN        2
 
 /* request type */
 #define HTTP_REQTYPE_SERVER        0     /* simple server request */
@@ -164,13 +164,13 @@ typedef enum _HttpMessageCode
 } HttpMessageCode;
 
 /* protocol to pull data on the server side */
-#define HTTP_PROTO_HTTP		0
-#define HTTP_PROTO_HTTPS	1
-#define HTTP_PROTO_FTP		2
+#define HTTP_PROTO_HTTP        0
+#define HTTP_PROTO_HTTPS    1
+#define HTTP_PROTO_FTP        2
 
 /* special HTTP lengths, values >= 0 are the exact length of the chunk */
-#define HTTP_LENGTH_NONE		-2
-#define HTTP_LENGTH_UNKNOWN		-1
+#define HTTP_LENGTH_NONE        -2
+#define HTTP_LENGTH_UNKNOWN        -1
 
 #define HTTP_TRANSFER_NORMAL             0
 #define HTTP_TRANSFER_TO_BLOB            1

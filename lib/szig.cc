@@ -1068,7 +1068,7 @@ z_szig_agr_maximum_diff(ZSzigNode *target_node, ZSzigEvent ev G_GNUC_UNUSED, ZSz
   if (!max_state->source_node)
     {
       /*LOG
-	This message indicates an internal error, please contact your Zorp support for assistance.
+    This message indicates an internal error, please contact your Zorp support for assistance.
        */
       z_log(NULL, CORE_ERROR, 3, "Invalid maximum aggregator, no source node; source_node='%s'", source_node_name);
       z_return();
@@ -1220,7 +1220,7 @@ z_szig_agr_average_rate(ZSzigNode *target_node, ZSzigEvent ev G_GNUC_UNUSED, ZSz
   if (!avg_state->source_node)
     {
       /*LOG
-	This message indicates an internal error, please contact your Zorp support for assistance.
+    This message indicates an internal error, please contact your Zorp support for assistance.
        */
       z_log(NULL, CORE_ERROR, 3, "Invalid average aggregator, no source node; source_node='%s'", source_node_name);
       z_return();

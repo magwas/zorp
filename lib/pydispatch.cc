@@ -352,7 +352,7 @@ z_policy_dispatch_accept(ZConnection *conn, gpointer user_data)
   cap_enable(CAP_NET_ADMIN);
 
   res = PyEval_CallFunction(self->handler, "(OOOO)",
-			    pystream, addr, local, bound);
+                pystream, addr, local, bound);
 
   cap_restore(saved_caps);
 
@@ -374,8 +374,8 @@ z_policy_dispatch_accept(ZConnection *conn, gpointer user_data)
     {
       gchar buf[256];
       /*LOG
-	This message indicates that the decision layer denied the
-	given connection.
+    This message indicates that the decision layer denied the
+    given connection.
       */
       z_log(NULL, CORE_POLICY, 1, "Connection denied by policy; %s", z_connection_format(conn, buf, sizeof(buf)));
       /* close(fd); */

@@ -259,10 +259,10 @@ smtp_parse_address(SmtpProxy *self, GString *result, gchar *path, gchar **end)
         }
       else
         {
-	  /*LOG
-	    This message indicates that the local part of the mail is invalid because it does
-	    not end with a '@' sign.
-	   */
+      /*LOG
+        This message indicates that the local part of the mail is invalid because it does
+        not end with a '@' sign.
+       */
           z_proxy_log(self, SMTP_VIOLATION, 2, "Local part does not end in '@'; path='%s'", path);
           z_proxy_leave(self);
           return FALSE;
@@ -346,9 +346,9 @@ smtp_sanitize_address(SmtpProxy *self, GString *result, gchar *path, gboolean em
     {
       if (!smtp_parse_address(self, result, src, &end))
         {
-	  /*LOG
-	    This message indicates that the address information is invalid.
-	   */
+      /*LOG
+        This message indicates that the address information is invalid.
+       */
           z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid address information; path='%s'", path);
           z_proxy_return(self, FALSE);
         }
@@ -521,10 +521,10 @@ smtp_parse_mail_extensions(SmtpProxy *self, gchar *ext, GString *forward_extensi
           size = strtol(val, &end, 10);
           if (*end != 0)
             {
-	      /*LOG
-	        This message indicates that the SIZE extension of the MAIL command is invalid
-		because it must contain non-numeric characters. Zorp rejects the request.
-	       */
+          /*LOG
+            This message indicates that the SIZE extension of the MAIL command is invalid
+        because it must contain non-numeric characters. Zorp rejects the request.
+           */
               z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid SIZE extension in the MAIL command; extensions='%s'", ext);
               z_proxy_return(self, FALSE);
             }
@@ -534,10 +534,10 @@ smtp_parse_mail_extensions(SmtpProxy *self, gchar *ext, GString *forward_extensi
         {
           if (strcasecmp(val, "7BIT") != 0 && strcasecmp(val, "8BITMIME") != 0)
             {
-	      /*LOG
-	        This message indicates that the BODY extension of the MAIL command is invalid
-		because it must contain either '7BIT' or '8BITMIME'. Zorp rejects the request.
-	       */
+          /*LOG
+            This message indicates that the BODY extension of the MAIL command is invalid
+        because it must contain either '7BIT' or '8BITMIME'. Zorp rejects the request.
+           */
               z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid BODY extension in the MAIL command; extensions='%s'", ext);
               z_proxy_return(self, FALSE);
             }
@@ -547,10 +547,10 @@ smtp_parse_mail_extensions(SmtpProxy *self, gchar *ext, GString *forward_extensi
         {
           if (!smtp_is_xtext(self, val))
             {
-	      /*LOG
-	        This message indicates that the AUTH extension of the MAIL command is invalid
-		because it must be xtext. Zorp rejects the request.
-	       */
+          /*LOG
+            This message indicates that the AUTH extension of the MAIL command is invalid
+        because it must be xtext. Zorp rejects the request.
+           */
               z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid AUTH sender, not an xtext; extensions='%s'", ext);
               z_proxy_return(self, FALSE);
             }
@@ -558,10 +558,10 @@ smtp_parse_mail_extensions(SmtpProxy *self, gchar *ext, GString *forward_extensi
         }
       else
         {
-	  /*LOG
-	    This message indicates that the given extension is invalid with the MAIL command and Zorp
-	    rejects the request.
-	   */
+      /*LOG
+        This message indicates that the given extension is invalid with the MAIL command and Zorp
+        rejects the request.
+       */
           z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid extension in the MAIL command; extensions='%s'", ext);
           z_proxy_return(self, FALSE);
         }

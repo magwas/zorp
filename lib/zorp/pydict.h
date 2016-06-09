@@ -30,21 +30,21 @@ typedef struct _ZPolicyDict ZPolicyDict;
 typedef enum
 {
   Z_VT_NONE     = 0,    /* end of argument list */
-  Z_VT_INT,	        /* variable is an int */
+  Z_VT_INT,            /* variable is an int */
   Z_VT_INT8,            /* variable is an int8 */
-  Z_VT_INT16,	        /* variable is an int16 */
-  Z_VT_INT32,	        /* variable is an int32 */
-  Z_VT_INT64,	        /* variable is an int64 */
-  Z_VT_STRING,	        /* variable is a string, represented as a GString */
+  Z_VT_INT16,            /* variable is an int16 */
+  Z_VT_INT32,            /* variable is an int32 */
+  Z_VT_INT64,            /* variable is an int64 */
+  Z_VT_STRING,            /* variable is a string, represented as a GString */
   Z_VT_CSTRING,         /* variable is a string, represented as a C character buffer and size */
   Z_VT_IP,              /* variable is an ip address, represented as struct in_addr */
   Z_VT_IP6,             /* variable is an ipv6 address, represented as struct in6_addr */
-  Z_VT_OBJECT,	        /* variable is a policy object */
-  Z_VT_HASH,	        /* variable is a hash */
+  Z_VT_OBJECT,            /* variable is a policy object */
+  Z_VT_HASH,            /* variable is a hash */
   Z_VT_METHOD,          /* variable is a method */
-  Z_VT_CUSTOM,	        /* variable is something, requests are processed via a function call */
+  Z_VT_CUSTOM,            /* variable is something, requests are processed via a function call */
   Z_VT_DIMHASH,         /* variable is a multidimensional hash */
-  Z_VT_ALIAS,	        /* variable is an alias of another variable */
+  Z_VT_ALIAS,            /* variable is an alias of another variable */
   Z_VT_PTR,             /* variable is a generic pointer */
   Z_VT_BYTEARRAY,       /* variable is a byte array, representing data possibly containing \0 */
 } ZVarType;

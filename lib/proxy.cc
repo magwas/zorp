@@ -996,7 +996,7 @@ z_proxy_find_iface(ZProxy *self, ZClass *compat)
   if (!z_object_is_subclass(Z_CLASS(ZProxyIface), compat))
     {
       /*LOG
-	This message indicates an internal error, please contact your Zorp support for assistance.
+    This message indicates an internal error, please contact your Zorp support for assistance.
        */
       z_proxy_log(self, CORE_ERROR, 3, "Internal error, trying to look up a non-ZProxyIface compatible interface;");
       return NULL;
@@ -1406,8 +1406,8 @@ z_proxy_threaded_start(ZProxy *self, ZProxyGroup *proxy_group)
   if (!z_thread_new(self->session_id, z_proxy_thread_func, self))
     {
       /*LOG
-	This message indicates that Zorp was unable to create a new thread for the new proxy instance.
-	It is likely that Zorp reached a thread limit, or not enough resource is available.
+    This message indicates that Zorp was unable to create a new thread for the new proxy instance.
+    It is likely that Zorp reached a thread limit, or not enough resource is available.
        */
       z_proxy_log(self, CORE_ERROR, 2, "Error creating proxy thread;");
       z_proxy_destroy(self);

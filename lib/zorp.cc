@@ -114,9 +114,9 @@ z_load_policy(const gchar *policy_file,
   if (!z_policy_boot(policy) || !z_policy_load(policy))
     {
       /*LOG
-	This message indicates that Zorp was unable to load the policy.
-	It is likely that the policy has any kind of syntactical problem.
-	Check the traceback in the log to find out where the problem occurs.
+    This message indicates that Zorp was unable to load the policy.
+    It is likely that the policy has any kind of syntactical problem.
+    Check the traceback in the log to find out where the problem occurs.
        */
       z_log(NULL, CORE_ERROR, 0, "Error booting & parsing policy;");
       z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
@@ -132,7 +132,7 @@ z_load_policy(const gchar *policy_file,
       z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(policy);
       /*LOG
-	This message indicates that Zorp was unable to initialize the policy.
+    This message indicates that Zorp was unable to initialize the policy.
        */
       z_log(NULL, CORE_ERROR, 0, "Error initializing policy;");
       return FALSE;
@@ -183,8 +183,8 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name,
   if (!z_load_policy(policy_file, instance_policy_list, virtual_instance_name, is_master))
     {
       /*LOG
-	This message indicates that the loading of the initial policy failed, because of some policy problem.
-	Check the log to find out where the problem occurs.
+    This message indicates that the loading of the initial policy failed, because of some policy problem.
+    Check the log to find out where the problem occurs.
        */
       z_log(NULL, CORE_ERROR, 0, "Error loading initial policy, exiting;");
       /* hack to let our messages get out */
@@ -229,27 +229,27 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name,
 
         }
       if (hup_received)
-	{
-	  /*LOG
-	    This message reports that Zorp caught a HUP signal and tries to reload its policy.
-	   */
-	  z_log(NULL, CORE_INFO, 0, "Reloading policy; policy_file='%s', instance_name='%s'", policy_file, instance_name);
+    {
+      /*LOG
+        This message reports that Zorp caught a HUP signal and tries to reload its policy.
+       */
+      z_log(NULL, CORE_INFO, 0, "Reloading policy; policy_file='%s', instance_name='%s'", policy_file, instance_name);
           if (!z_load_policy(policy_file, instance_policy_list, virtual_instance_name, is_master))
-	    {
-	      /*LOG
-		This message indicates that Zorp was unable to load the new policy, and reverts to the old one.
-		Check the logs to find out where the error occurs in the new policy.
-	       */
-	      z_log(NULL, CORE_ERROR, 0, "Error reloading policy, reverting to old;");
-	      reload_result = FALSE;
-	    }
+        {
+          /*LOG
+        This message indicates that Zorp was unable to load the new policy, and reverts to the old one.
+        Check the logs to find out where the error occurs in the new policy.
+           */
+          z_log(NULL, CORE_ERROR, 0, "Error reloading policy, reverting to old;");
+          reload_result = FALSE;
+        }
           else
             {
               reload_result = TRUE;
             }
-	  hup_received = 0;
-	  z_generate_policy_load_event(policy_file, reload_result);
-	}
+      hup_received = 0;
+      z_generate_policy_load_event(policy_file, reload_result);
+    }
       if (term_received)
         {
           z_main_loop_quit(0);

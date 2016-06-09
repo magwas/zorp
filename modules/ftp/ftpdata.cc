@@ -138,8 +138,8 @@ ftp_transfer_stack_proxy(ZTransfer2 *s, ZStackedProxy **stacked)
     {
       /*LOG
         This message indicates that the request_stack or response_stack hash
-	contains an invalid stacking tuple. It should contain a (stack_type, proxy_class) tuple.
-	Check your Zorp configuration.
+    contains an invalid stacking tuple. It should contain a (stack_type, proxy_class) tuple.
+    Check your Zorp configuration.
        */
       z_proxy_log(self->super.owner, FTP_POLICY, 3, "Invalid stacking tuple returned by policy;");
       z_proxy_report_invalid_policy(self->super.owner);
@@ -149,7 +149,7 @@ ftp_transfer_stack_proxy(ZTransfer2 *s, ZStackedProxy **stacked)
     {
       /*LOG
         This message indicates that the request_stack or response_stack hash
-	contains an invalid stacking type. Check your Zorp configuration.
+    contains an invalid stacking type. Check your Zorp configuration.
        */
       z_proxy_log(self->super.owner, FTP_POLICY, 3, "Invalid stacking type; type='%d'", stack_type);
       z_proxy_report_invalid_policy(self->super.owner);
@@ -224,7 +224,7 @@ ftp_data_transfer(FtpProxy *self, ZStream *from_stream, ZStream *to_stream)
     {
       /*LOG
         This message indicates that the processed request was invalid, and
-	the data transfer failed.
+    the data transfer failed.
        */
       z_proxy_log(self, FTP_ERROR, 2, "Invalid request, data transfer failed;");
       SET_ANSWER(MSG_DATA_TRANSFER_FAILED);

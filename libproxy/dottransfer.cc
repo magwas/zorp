@@ -95,7 +95,7 @@ z_dot_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count,
       break;
     case G_IO_STATUS_EOF:
       /*LOG
-	This message indicates that server unexpectedly closed its connection.
+    This message indicates that server unexpectedly closed its connection.
        */
       z_log(NULL, CORE_ERROR, 4, "Unexpected EOF while transferring from server;");
       res = G_IO_STATUS_ERROR;

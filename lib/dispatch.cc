@@ -440,9 +440,9 @@ z_dispatch_chain_thread(gpointer st)
       if (count % 1000 == 0)
         {
           /*LOG
-	    This message reports the dispatcher average accept queue length status.
-	   */
-	  z_log(NULL, CORE_DEBUG, 4, "Accept queue stats; avg_length='%ld'", acceptq_sum / 1000);
+        This message reports the dispatcher average accept queue length status.
+       */
+      z_log(NULL, CORE_DEBUG, 4, "Accept queue stats; avg_length='%ld'", acceptq_sum / 1000);
           acceptq_sum = 0;
         }
       conn = static_cast<ZConnection *>(g_async_queue_pop(self->accept_queue));
@@ -493,13 +493,13 @@ z_dispatch_chain_new(const gchar *session_id, ZDispatchBind *key, ZDispatchParam
       g_snprintf(thread_name, sizeof(thread_name), "dispatch(%s)", z_dispatch_bind_format(key, buf, sizeof(buf)));
       if (!z_thread_new(thread_name, z_dispatch_chain_thread, self))
         {
-	  /*LOG
-	    This message indicates that Zorp was unable to create a
-	    dispatcher thread for accepting new connection, and it is
-	    reverting back to the original non-threaded mode.  It is likely
-	    that Zorp reached its thread or resource limit. Check your logs
-	    for further information.
-	   */
+      /*LOG
+        This message indicates that Zorp was unable to create a
+        dispatcher thread for accepting new connection, and it is
+        reverting back to the original non-threaded mode.  It is likely
+        that Zorp reached its thread or resource limit. Check your logs
+        for further information.
+       */
           z_log(NULL, CORE_ERROR, 2, "Error creating dispatch thread, falling back to non-threaded mode;");
           z_dispatch_chain_unref(self);
           self->threaded = FALSE;
@@ -1194,11 +1194,11 @@ z_dispatch_unregister(ZDispatchEntry *entry)
         }
       else
         {
-	  /*LOG
-	    This message indicates that a Listener/Receiver/Proxy tries to
-	    unbind from the specified address, but have not registered
-	    itself to that address.
-	   */
+      /*LOG
+        This message indicates that a Listener/Receiver/Proxy tries to
+        unbind from the specified address, but have not registered
+        itself to that address.
+       */
           z_log(NULL, CORE_ERROR, 1, "Internal error, dispatch entry not found (chain exists); dispatch='%s', entry='%p'",
                 z_dispatch_bind_format(entry->chain_key, buf, sizeof(buf)), entry);
         }
@@ -1222,9 +1222,9 @@ z_dispatch_unregister(ZDispatchEntry *entry)
   else
     {
       /*LOG
-	This message indicates that a Listener/Receiver/Proxy tries to
-	unbind from the specified address, but Zorp does not bind to that
-	address.
+    This message indicates that a Listener/Receiver/Proxy tries to
+    unbind from the specified address, but Zorp does not bind to that
+    address.
        */
       z_log(NULL, CORE_ERROR, 1,
             "Internal error, dispatch entry not found (no chain); dispatch='%s', entry='%p'",

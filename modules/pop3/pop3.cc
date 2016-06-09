@@ -168,7 +168,7 @@ pop3_response_parse(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the response line is too long and Zorp
-	aborts the connection. Check the 'max_reply_length' attribute.
+    aborts the connection. Check the 'max_reply_length' attribute.
        */
       z_proxy_log(self, POP3_VIOLATION, 3, "Response line too long; line='%.*s', length='%d', max_reply_length='%d'",
          (int)self->reply_length, self->reply_line, (int)self->reply_length, self->max_reply_length);
@@ -182,8 +182,8 @@ pop3_response_parse(Pop3Proxy *self)
   if ((strcmp(response,"+OK") != 0) && (strcmp(response,"-ERR") != 0))
     {
       /*LOG
-	This message indicates that the status of the response is invalid and Zorp
-	rejects the response. The response should begin with '+OK' or with '-ERR'.
+    This message indicates that the status of the response is invalid and Zorp
+    rejects the response. The response should begin with '+OK' or with '-ERR'.
        */
       z_proxy_log(self, POP3_VIOLATION, 3, "Response status is invalid; rsp='%s'", response);
       z_proxy_return(self, POP3_RSP_REJECT);
@@ -275,7 +275,7 @@ pop3_response_multiline(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the multi-line data transfer failed and
-	Zorp rejects the response.
+    Zorp rejects the response.
        */
       z_proxy_log(self, POP3_ERROR, 2, "Data transfer failed;");
     }
@@ -383,7 +383,7 @@ pop3_command_parse(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the request line is too long and Zorp rejects
-	the request. Check the 'max_request_length' attribute.
+    the request. Check the 'max_request_length' attribute.
        */
       z_proxy_log(self, POP3_VIOLATION, 3, "Request line too long; line='%.*s', length='%d', max_request_length='%d'",
          (int)self->request_length, self->request_line, (int)self->request_length, self->max_request_length);
@@ -421,7 +421,7 @@ pop3_command_parse(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the request was unknown and Zorp aborts the connection.
-	Check the 'permit_unknown_command' and the 'request' attributes.
+    Check the 'permit_unknown_command' and the 'request' attributes.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "Unknown request command; req='%s'", self->command->str);
       z_proxy_return(self, POP3_REQ_ABORT);
@@ -431,7 +431,7 @@ pop3_command_parse(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the request command is not allowed in this state of the protocol
-	and Zorp rejects the request.
+    and Zorp rejects the request.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "Request command not allowed in this state; req='%s', state='%d'", self->command->str, self->pop3_state);
       z_proxy_return(self, POP3_REQ_REJECT);

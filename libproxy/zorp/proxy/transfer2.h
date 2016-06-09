@@ -37,7 +37,7 @@ typedef enum
 
 #define ZT2F_COMPLETE_COPY        0x0001
 #define ZT2F_PROXY_STREAMS_POLLED 0x0002
-#define ZT2F_SUSPEND_NOOP	  0x0004
+#define ZT2F_SUSPEND_NOOP      0x0004
 
 /* transfer status constants */
 

@@ -24,16 +24,16 @@
 #include "../http.h"
 
 #define TEST_STR(field) \
-  do 											\
-    {											\
-      if (ok && 									\
-          ((field && memcmp(field, url. field->str, url. field->len) != 0) ||		\
-           (!field && url. field->len)))    						\
-        { 										\
-          fail_reason = g_strdup_printf("Returned and expected value for " #field " mismatch: %s <> %s", url. field->str, field);		\
-          ok = FALSE;									\
-        }										\
-    }											\
+  do                                             \
+    {                                            \
+      if (ok &&                                     \
+          ((field && memcmp(field, url. field->str, url. field->len) != 0) ||        \
+           (!field && url. field->len)))                            \
+        {                                         \
+          fail_reason = g_strdup_printf("Returned and expected value for " #field " mismatch: %s <> %s", url. field->str, field);        \
+          ok = FALSE;                                    \
+        }                                        \
+    }                                            \
   while (0)
 
 void

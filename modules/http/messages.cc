@@ -32,7 +32,7 @@ This message indicates that the version sent by the client is missing.
 const char * msg_http_version_missing = LOG_MSG("http version missing");
 
 /*LOG
-	This message indicates that the http version is too long.
+    This message indicates that the http version is too long.
 */
 const gchar * msg_http_version_too_long = LOG_MSG("http version is too long");
 

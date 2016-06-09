@@ -985,25 +985,25 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 
   ParseState parseState;
   parse_start(&parseState,
-  		line, bufferLength);
+          line, bufferLength);
 
   ParseState *pParseState=&parseState;
 
   try
   {
-	  parse_until_space_to_GString(pParseState, self->request_method, msg_request_have_no_spaces,
-				msg_request_have_no_method, NULL, 0);
+      parse_until_space_to_GString(pParseState, self->request_method, msg_request_have_no_spaces,
+                msg_request_have_no_method, NULL, 0);
 
-	  parse_until_spaces_end(msg_url_missing, pParseState);
+      parse_until_spaces_end(msg_url_missing, pParseState);
 
-	  parse_until_space_to_GString(pParseState, self->request_url, msg_url_is_not_followed_by_space,
-				msg_request_have_no_method, msg_url_is_too_long, self->max_url_length);
+      parse_until_space_to_GString(pParseState, self->request_url, msg_url_is_not_followed_by_space,
+                msg_request_have_no_method, msg_url_is_too_long, self->max_url_length);
 
-	  parse_until_spaces_end(msg_http_version_missing, pParseState);
+      parse_until_spaces_end(msg_http_version_missing, pParseState);
 
-	  parse_until_space_to_gchar(pParseState, self->request_version,
-		  		NULL, msg_http_version_missing,
-				msg_http_version_too_long, sizeof(self->request_version)-1);
+      parse_until_space_to_gchar(pParseState, self->request_version,
+                  NULL, msg_http_version_missing,
+                msg_http_version_too_long, sizeof(self->request_version)-1);
   } catch(std::exception &e) {
       z_proxy_log(self, HTTP_VIOLATION, 1, "%s", e.what());
       return FALSE;
@@ -1034,54 +1034,54 @@ http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
 
   ParseState parseState;
   parse_start(&parseState,
-  		line, bufferLength);
+          line, bufferLength);
   ParseState *pParseState=&parseState;
 
   try {
-	  parse_until_space_to_gchar(pParseState, self->response_version,
-		  		msg_response_code_missing, msg_response_version_missing,
-				msg_response_version_too_long, sizeof(self->response_version)-1);
+      parse_until_space_to_gchar(pParseState, self->response_version,
+                  msg_response_code_missing, msg_response_version_missing,
+                msg_response_version_too_long, sizeof(self->response_version)-1);
 
-	  if (memcmp(self->response_version, "HTTP", 4) != 0)
-	    {
-	      /*LOG
-	        This message indicates that the server sent an invalid response status line.
-	      */
-	      z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%.*s'", bufferLength, line);
-	      z_proxy_return(self, FALSE);
-	    }
+      if (memcmp(self->response_version, "HTTP", 4) != 0)
+        {
+          /*LOG
+            This message indicates that the server sent an invalid response status line.
+          */
+          z_proxy_log(self, HTTP_RESPONSE, 6, "Invalid HTTP status line; line='%.*s'", bufferLength, line);
+          z_proxy_return(self, FALSE);
+        }
 
-	  parse_until_spaces_end(msg_response_code_missing, pParseState);
+      parse_until_spaces_end(msg_response_code_missing, pParseState);
 
-	  parse_until_space_to_gchar(pParseState, self->response,
-		  		msg_response_message_missing, msg_response_code_missing,
-				msg_response_code_too_long, sizeof(self->response)-1);
+      parse_until_space_to_gchar(pParseState, self->response,
+                  msg_response_message_missing, msg_response_code_missing,
+                msg_response_code_too_long, sizeof(self->response)-1);
 
-	  char *endptr;
-	  self->response_code = strtol(self->response, &endptr, 10);
-	  if (endptr == self->response)
-	  {
-	      /*LOG
-	        This message indicates that the response code sent by the server is
-	        not a number.
-	      */
-	      z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", bufferLength, line);
-	      z_proxy_return(self, FALSE);
-	  }
-	  if ( (self->response_code > 999) || (self->response_code < 100) )
-		{
-		  /*LOG
-			This message indicates that the response code sent by the server is
-			not three digits
-		  */
-		  z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", bufferLength, line);
-		  z_proxy_return(self, FALSE);
-		}
+      char *endptr;
+      self->response_code = strtol(self->response, &endptr, 10);
+      if (endptr == self->response)
+      {
+          /*LOG
+            This message indicates that the response code sent by the server is
+            not a number.
+          */
+          z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not a number; line='%.*s'", bufferLength, line);
+          z_proxy_return(self, FALSE);
+      }
+      if ( (self->response_code > 999) || (self->response_code < 100) )
+        {
+          /*LOG
+            This message indicates that the response code sent by the server is
+            not three digits
+          */
+          z_proxy_log(self, HTTP_VIOLATION, 1, "Response code is not three digits; line='%.*s'", bufferLength, line);
+          z_proxy_return(self, FALSE);
+        }
 
-	  parse_until_spaces_end(msg_response_message_missing, pParseState);
+      parse_until_spaces_end(msg_response_message_missing, pParseState);
 
-	  parse_until_end_to_GString(pParseState, self->response_msg,
-		  		msg_response_message_missing, 255);
+      parse_until_end_to_GString(pParseState, self->response_msg,
+                  msg_response_message_missing, 255);
 
   } catch(std::exception &e) {
       z_proxy_log(self, HTTP_VIOLATION, 1, "%s", e.what());

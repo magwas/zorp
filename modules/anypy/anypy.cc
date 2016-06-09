@@ -219,8 +219,8 @@ anypy_register_vars(AnyPyProxy *self)
   z_proxy_enter(self);
   /* method for setting the proxy verdict. It should be used before the first write */
   z_proxy_var_new(&self->super, "set_verdict",
-	Z_VAR_TYPE_METHOD | Z_VAR_GET,
-	self,anypy_set_verdict);
+    Z_VAR_TYPE_METHOD | Z_VAR_GET,
+    self,anypy_set_verdict);
   /* method for setting the content hint. It should be used before the first write */
   z_proxy_var_new(&self->super, "set_content_hint",
         Z_VAR_TYPE_METHOD | Z_VAR_GET,
@@ -231,12 +231,12 @@ anypy_register_vars(AnyPyProxy *self)
         self, anypy_stack);
   /* size of line buffer of the client stream */
   z_proxy_var_new(&self->super, "client_max_line_length",
-	Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
-	&self->max_line_length[EP_CLIENT]);
+    Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
+    &self->max_line_length[EP_CLIENT]);
   /* size of line buffer of the server stream */
   z_proxy_var_new(&self->super, "server_max_line_length",
-	Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
-	&self->max_line_length[EP_SERVER]);
+    Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
+    &self->max_line_length[EP_SERVER]);
   z_proxy_leave(self);
 }
 

@@ -28,14 +28,14 @@
 
 BOOST_AUTO_TEST_CASE(test_z_log_2_formats_correctly)
 {
-	z_log_init("http.*:6",3);
-	z_log_change_logspec("http.*:6",NULL);
-	z_log2("session id", "http.violation", 2, "(%s): '%s'", "message");
-	BOOST_CHECK_MESSAGE( 0 == strcmp(
-			last_log_result.formatted_msg,
-			"(session id): 'message'"),
-			"log message problem"
-			"\n "
-			"\n actual  : " << last_log_result.formatted_msg);
+    z_log_init("http.*:6",3);
+    z_log_change_logspec("http.*:6",NULL);
+    z_log2("session id", "http.violation", 2, "(%s): '%s'", "message");
+    BOOST_CHECK_MESSAGE( 0 == strcmp(
+            last_log_result.formatted_msg,
+            "(session id): 'message'"),
+            "log message problem"
+            "\n "
+            "\n actual  : " << last_log_result.formatted_msg);
 
 }

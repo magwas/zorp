@@ -386,16 +386,16 @@ z_proxy_control_stream_read(ZStream *stream, GIOCondition cond G_GNUC_UNUSED, gp
               goto error;
             }
 
-	  if (strcmp(hdr1->value->str, "Z_ACCEPT") == 0)
-	    verdict = ZV_ACCEPT;
-	  else if (strcmp(hdr1->value->str, "Z_REJECT") == 0)
+      if (strcmp(hdr1->value->str, "Z_ACCEPT") == 0)
+        verdict = ZV_ACCEPT;
+      else if (strcmp(hdr1->value->str, "Z_REJECT") == 0)
             verdict = ZV_REJECT;
-	  else if (strcmp(hdr1->value->str, "Z_DROP") == 0)
+      else if (strcmp(hdr1->value->str, "Z_DROP") == 0)
             verdict = ZV_DROP;
-	  else if (strcmp(hdr1->value->str, "Z_ERROR") == 0)
-	    verdict = ZV_ERROR;
-	  else
-	    verdict = ZV_UNSPEC;
+      else if (strcmp(hdr1->value->str, "Z_ERROR") == 0)
+        verdict = ZV_ERROR;
+      else
+        verdict = ZV_UNSPEC;
 
           z_proxy_stack_iface_set_verdict(siface, verdict, hdr2 ? hdr2->value->str : NULL);
         }

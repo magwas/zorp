@@ -33,7 +33,7 @@ static PyObject *z_policy_stream_new_instance(PyObject *self, PyObject *args);
 static void z_policy_stream_destroy(PyObject *o);
 static PyObject *z_policy_stream_getattr(PyObject *o, char *name);
 static gint z_policy_stream_setattr(PyObject *o, char *name,
-				     PyObject *value);
+                     PyObject *value);
 static PyObject *z_policy_stream_repr(PyObject *o);
 static PyObject *z_policy_stream_read(PyObject *o, PyObject *args);
 static PyObject *z_policy_stream_write(PyObject *o, PyObject *args);
@@ -229,31 +229,31 @@ z_policy_stream_getattr(PyObject *o, char *name)
  **/
 static gint
 z_policy_stream_setattr(PyObject *o, char *name,
-			 PyObject *value)
+             PyObject *value)
 {
   ZPolicyStream *self = (ZPolicyStream *) o;
   gchar *str;
   if (strcmp(name, "name") == 0)
     {
       if (!PyArg_Parse(value, "s", &str))
-	{
-	  PyErr_SetString(PyExc_TypeError, "Stream name is not a string");
-	  return -1;
-	}
+    {
+      PyErr_SetString(PyExc_TypeError, "Stream name is not a string");
+      return -1;
+    }
       else
-	{
-	  z_stream_set_name(self->stream, str);
-	  return 0;
-	}
+    {
+      z_stream_set_name(self->stream, str);
+      return 0;
+    }
     }
   else if (strcmp(name, "nul_nonfatal") == 0)
     {
       int cval;
       if (!PyArg_Parse(value, "i", &cval))
-	{
-	  PyErr_SetString(PyExc_TypeError, "nul_nonfatal is boolean");
-	  return -1;
-	}
+    {
+      PyErr_SetString(PyExc_TypeError, "nul_nonfatal is boolean");
+      return -1;
+    }
       z_stream_ctrl(self->stream, ZST_LINE_SET_NUL_NONFATAL,  &cval, sizeof(int));
       return 0;
     }
@@ -261,10 +261,10 @@ z_policy_stream_setattr(PyObject *o, char *name,
     {
       int cval;
       if (!PyArg_Parse(value, "i", &cval))
-	{
-	  PyErr_SetString(PyExc_TypeError, "split is boolean");
-	  return -1;
-	}
+    {
+      PyErr_SetString(PyExc_TypeError, "split is boolean");
+      return -1;
+    }
       z_stream_ctrl(self->stream, ZST_LINE_SET_SPLIT,  &cval, sizeof(int));
       return 0;
     }
@@ -286,15 +286,15 @@ z_policy_stream_setattr(PyObject *o, char *name,
     {
       gint nonblocking;
       if (!PyArg_Parse(value, "i", &nonblocking))
-	{
-	  PyErr_SetString(PyExc_TypeError, "Stream nonblocking value should be 0 or 1");
-	  return 1;
-	}
+    {
+      PyErr_SetString(PyExc_TypeError, "Stream nonblocking value should be 0 or 1");
+      return 1;
+    }
       else
-	{
-	  z_stream_set_nonblock(self->stream, (nonblocking != 0) ? TRUE : FALSE);
-	  return 0;
-	}
+    {
+      z_stream_set_nonblock(self->stream, (nonblocking != 0) ? TRUE : FALSE);
+      return 0;
+    }
     }
 
   PyErr_SetString(PyExc_AttributeError, "No such attribute");

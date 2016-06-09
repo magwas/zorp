@@ -1402,7 +1402,7 @@ PyTypeObject z_policy_dim_hash_type =
   0,                                  /* tp_as_sequence */
   &z_policy_dim_hash_mapping,         /* tp_as_mapping */
   0,                                  /* tp_hash */
-  0,  				                        /* tp_call */
+  0,                                          /* tp_call */
   0,                                  /* tp_str */
   0,                                  /* tp_getattro */
   0,                                  /* tp_setattro */

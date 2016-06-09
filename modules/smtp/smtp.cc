@@ -330,7 +330,7 @@ smtp_fetch_request(SmtpProxy *self)
     {
       /*LOG
         This message indicates that the request line is too long and Zorp rejects the request. Check
-	the 'max_request_length' attribute.
+    the 'max_request_length' attribute.
        */
       z_proxy_log(self, SMTP_VIOLATION, 2, "Request line too long; length='%zd', max='%d'", line_len, self->max_request_length);
       z_proxy_return(self, FALSE);
@@ -368,7 +368,7 @@ smtp_process_request(SmtpProxy *self)
       g_string_assign(self->error_info, "Invalid command in this state");
       /*LOG
         This message indicates that the given command is not permitted in this state of the communication and
-	Zorp rejects the request.
+    Zorp rejects the request.
        */
       z_proxy_log(self, SMTP_VIOLATION, 4, "Command not permitted in this state; request='%s', state='%d'", self->request->str, self->smtp_state);
       z_proxy_return(self, res);
@@ -392,7 +392,7 @@ smtp_process_request(SmtpProxy *self)
     {
       /*LOG
         This message indicates that the given request is unknown and Zorp rejects it.
-	Check the 'permit_unknown_command' and the 'request' attributes.
+    Check the 'permit_unknown_command' and the 'request' attributes.
        */
       z_proxy_log(self, SMTP_VIOLATION, 2, "Unknown command; request='%s'", self->request->str);
       z_proxy_return(self, res);
@@ -484,7 +484,7 @@ smtp_fetch_auth_request(SmtpProxy *self)
     {
       /*LOG
         This message indicates that the authentication request line is too long and Zorp rejects the request.
-	Check the 'max_auth_request_length' attribute.
+    Check the 'max_auth_request_length' attribute.
        */
       z_proxy_log(self, SMTP_VIOLATION, 2, "Auth request line too long; length='%zd', max='%d'", line_len, self->max_auth_request_length);
       z_proxy_return(self, FALSE);
@@ -607,10 +607,10 @@ smtp_parse_response(SmtpProxy *self G_GNUC_UNUSED,
     {
       if (!isdigit(line[i]))
         {
-	  /*LOG
-	    This message indicates that the response contains non-numeric characters and Zorp
-	    rejects the response.
-	   */
+      /*LOG
+        This message indicates that the response contains non-numeric characters and Zorp
+        rejects the response.
+       */
           z_proxy_log(self, SMTP_VIOLATION, 2, "SMTP reply contains non-numeric characters; line='%.*s'", line_len, line);
           z_proxy_return(self, FALSE);
         }
@@ -630,10 +630,10 @@ smtp_parse_response(SmtpProxy *self G_GNUC_UNUSED,
         }
       else
         {
-	  /*LOG
-	    This message indicates that the continuation character of the response contains an invalid
-	    character and Zorp rejects the response. The response must contain ' ' or '-' after the response code.
-	   */
+      /*LOG
+        This message indicates that the continuation character of the response contains an invalid
+        character and Zorp rejects the response. The response must contain ' ' or '-' after the response code.
+       */
           z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid continuation character; line='%.*s'", line_len, line);
           z_proxy_return(self, FALSE);
         }
@@ -718,9 +718,9 @@ smtp_fetch_response(SmtpProxy *self)
             {
               /* hmm, return codes in continuation lines differs from the
                * first */
-	      /*LOG
-	        This message indicates that the reply code has changed in the continuation lines and Zorp rejects the response.
-	       */
+          /*LOG
+            This message indicates that the reply code has changed in the continuation lines and Zorp rejects the response.
+           */
               z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid SMTP reply, reply code changed; response='%s', line='%.*s'", self->response->str, (gint) line_len, line);
               goto error_exit;
             }
@@ -897,10 +897,10 @@ smtp_generate_noop(SmtpProxy *self)
       policy_rejected = !smtp_response_accepted(smtp_process_response(self));
       if (strcmp(self->response->str, "250") == 0 && policy_rejected)
         {
-	  /*LOG
-	    This message indicates that the response code 250 for the NOOP request is required and
-	    Zorp ignores the invalid policy while generating NOOPs to the server.
-	   */
+      /*LOG
+        This message indicates that the response code 250 for the NOOP request is required and
+        Zorp ignores the invalid policy while generating NOOPs to the server.
+       */
           z_proxy_log(self, SMTP_POLICY, 3, "Invalid policy ignored, allowing 250 response to NOOP is required;");
         }
     }
@@ -1057,10 +1057,10 @@ smtp_process_transfer(SmtpProxy *self)
             }
           else if (policy_rejected)
             {
-	      /*LOG
-	        This message indicates that the response code 354 for the DATA request is required and
-		Zorp ignores the invalid policy during data transfer to the server.
-	       */
+          /*LOG
+            This message indicates that the response code 354 for the DATA request is required and
+        Zorp ignores the invalid policy during data transfer to the server.
+           */
               z_proxy_log(self, SMTP_POLICY, 3, "Invalid policy ignored, allowing 354 response to DATA is required;");
             }
 
@@ -1081,10 +1081,10 @@ smtp_process_transfer(SmtpProxy *self)
           /* empty message */
           if (z_transfer2_get_stack_decision(self->transfer) == ZV_REJECT)
             {
-	      /*LOG
-	        This message indicates that the content was declared invalid by the stacked proxy and Zorp
-		rejects it.
-	       */
+          /*LOG
+            This message indicates that the content was declared invalid by the stacked proxy and Zorp
+        rejects it.
+           */
               z_proxy_log(self, SMTP_POLICY, 3, "Invalid contents; stack_info='%s'", z_transfer2_get_stack_info(self->transfer));
 
               smtp_format_stack_info(self, "Error storing message", z_transfer2_get_stack_info(self->transfer));
@@ -1107,10 +1107,10 @@ smtp_process_transfer(SmtpProxy *self)
             }
           else
             {
-	      /*LOG
-	        This message indicates that an empty message is received from the stacked proxy and Zorp
-		rejects it.
-	       */
+          /*LOG
+            This message indicates that an empty message is received from the stacked proxy and Zorp
+        rejects it.
+           */
               z_proxy_log(self, SMTP_ERROR, 3, "Rejecting empty message;");
             }
           goto error_reset;
@@ -1421,9 +1421,9 @@ smtp_main(ZProxy *s)
                 }
             }
 
-	  /*LOG
-	    This message reports the accounting information of the mail transfer.
-	   */
+      /*LOG
+        This message reports the accounting information of the mail transfer.
+       */
           if (success)
             z_proxy_log(self, SMTP_ACCOUNTING, 4,
                         "Accounting; sender='%s', recipient='%s', response='%s', response_param='%s', result='%s'",

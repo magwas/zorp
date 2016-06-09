@@ -31,7 +31,7 @@ Pop3ParseNoarg(Pop3Proxy *self)
       is going to drop the parameter.
      */
     z_proxy_log(self, POP3_REQUEST, 4, "Dropping request parameter, no parameter allowed; req='%s', req_prm='%s'",
-	self->command->str, self->command_param->str);
+    self->command->str, self->command_param->str);
 
   g_string_assign(self->command_param, "");
   z_proxy_return(self, POP3_REQ_ACCEPT);
@@ -49,10 +49,10 @@ Pop3ParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the request is missing and Zorp
-	aborts the connection.
+    aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The required numerical parameter of the request is missing; req='%s' req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -60,10 +60,10 @@ Pop3ParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the request is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The numerical parameter of the request is not in the given range; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -71,10 +71,10 @@ Pop3ParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the request is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The numerical parameter of the request is negative; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -82,7 +82,7 @@ Pop3ParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the request is zero which is invalid and Zorp
-	aborts the connection.
+    aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The numerical parameter of the request is zero; req='%s', req_prm='%s'", self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
@@ -92,7 +92,7 @@ Pop3ParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the request contains junk characters after the number but
-	Zorp ignores and truncates the junk.
+    Zorp ignores and truncates the junk.
        */
       z_proxy_log(self, POP3_REQUEST, 4, "The numerical parameter of the request contains junk after the number; req='%s', req_prm='%s'",
                   self->command->str, self->command_param->str);
@@ -130,10 +130,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the first numerical parameter is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The first numerical parameter of the request is not in the given range; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -141,10 +141,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the first numerical parameter of the request is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The first numerical parameter of the request is negative; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -154,10 +154,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that only one numerical parameter is present but two is required and Zorp
-	rejects the request.
+    rejects the request.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "Only one numerical argument in request; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_REJECT);
     }
 
@@ -166,10 +166,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The second numerical parameter of the request is not in the given range; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -177,10 +177,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter of the request is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_REQUEST, 3, "The second numerical parameter of the request is a negative number; req='%s', req_prm='%s'",
-	  self->command->str, self->command_param->str);
+      self->command->str, self->command_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -188,10 +188,10 @@ Pop3ParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameters of the request contain junk characters after the numbers but
-	Zorp ignores and truncates the junk.
+    Zorp ignores and truncates the junk.
        */
       z_proxy_log(self, POP3_REQUEST, 4, "The numerical parameter of the request contain junk after the number; req='%s', req_prm='%s'",
-	self->command->str, self->command_param->str);
+    self->command->str, self->command_param->str);
     }
 
   g_snprintf(newline, sizeof(newline), "%ld %ld", arg1, arg2);
@@ -363,10 +363,10 @@ Pop3AnswerParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is missing and Zorp
-	aborts the connection.
+    aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The required numerical parameter of the response is missing; req='%s', rsp_prm='%s'",
-	self->command->str, self->response_param->str);
+    self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -374,10 +374,10 @@ Pop3AnswerParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The numerical parameter of the response is not in the given range; req='%s', rsp_prm='%s'",
-	self->command->str, self->response_param->str);
+    self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -385,10 +385,10 @@ Pop3AnswerParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The numerical parameter of the response is a negative number; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -396,10 +396,10 @@ Pop3AnswerParseNum_One(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response contains junk characters after the number but
-	Zorp ignores and truncates the junk.
+    Zorp ignores and truncates the junk.
        */
       z_proxy_log(self, POP3_RESPONSE, 4, "The numerical parameter of the response contains junk after the number; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
     }
 
   g_snprintf(newline, sizeof(newline), "%ld", arg);
@@ -427,10 +427,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The numerical parameter of the response is not in the given range; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -438,10 +438,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is missing and Zorp
-	aborts the connection.
+    aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The required numerical parameter of the response is missing; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -449,10 +449,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the numerical parameter of the response is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The numerical parameter of the response is a negative number; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -463,10 +463,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter of the response is not in the given range and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The second numerical parameter of the response is not in the given range; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -474,10 +474,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter of the response is missing and Zorp
-	aborts the connection.
+    aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The required second numerical parameter of the response is missing; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_REQ_ABORT);
     }
 
@@ -485,10 +485,10 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter of the response is a negative number which is invalid and
-	Zorp aborts the connection.
+    Zorp aborts the connection.
        */
       z_proxy_log(self, POP3_RESPONSE, 3, "The second numerical parameter of the response is a negative number; req='%s', rsp_prm='%s'",
-	  self->command->str, self->response_param->str);
+      self->command->str, self->response_param->str);
       z_proxy_return(self, POP3_RSP_ABORT);
     }
 
@@ -496,7 +496,7 @@ Pop3AnswerParseNum_Two(Pop3Proxy *self)
     {
       /*LOG
         This message indicates that the second numerical parameter of the response contains junk characters after the number but
-	Zorp ignores and truncates the junk.
+    Zorp ignores and truncates the junk.
        */
       z_proxy_log(self, POP3_REQUEST, 4, "The second numerical parameter of the response contains junk after the number; req='%s', rsp_prm='%s'",
                   self->command->str, self->response_param->str);

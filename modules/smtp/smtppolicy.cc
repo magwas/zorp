@@ -77,8 +77,8 @@ smtp_policy_check_request(SmtpProxy *self)
   if (!smtp_hash_get_type(entry, reinterpret_cast<guint *>(&action)))
     {
       /*LOG
-	This message indicates that the policy type is invalid for the given request and Zorp
-	aborts the connection. Check the 'request' attribute.
+    This message indicates that the policy type is invalid for the given request and Zorp
+    aborts the connection. Check the 'request' attribute.
        */
       z_proxy_log(self, SMTP_POLICY, 1, "Invalid request policy type; request='%s'", self->request->str);
       z_proxy_report_invalid_policy(&(self->super));
@@ -94,10 +94,10 @@ smtp_policy_check_request(SmtpProxy *self)
       z_policy_lock(self->super.thread);
       if (!z_policy_var_parse_tuple(entry, "i|ss", &action, &response, &response_param))
         {
-	  /*LOG
-	    This message indicates that the parameter of the request policy of the given request is invalid and Zorp aborts the connection.
-	    Check the 'request' attribute.
-	   */
+      /*LOG
+        This message indicates that the parameter of the request policy of the given request is invalid and Zorp aborts the connection.
+        Check the 'request' attribute.
+       */
           z_proxy_log(self, SMTP_POLICY, 1, "Error in request policy; request='%s'", self->request->str);
           z_proxy_report_policy_abort(&(self->super));
           action = SMTP_REQ_ABORT;
@@ -119,10 +119,10 @@ smtp_policy_check_request(SmtpProxy *self)
       z_policy_lock(self->super.thread);
       if (!z_policy_var_parse(entry, "(iO)", &action, &process_cmd))
         {
-	  /*LOG
-	    This message indicates that the parameter of the request policy of the given request is invalid and Zorp aborts the connection.
-	    Check the 'request' attribute.
-	   */
+      /*LOG
+        This message indicates that the parameter of the request policy of the given request is invalid and Zorp aborts the connection.
+        Check the 'request' attribute.
+       */
           z_proxy_log(self, SMTP_POLICY, 1, "Error in request policy; request='%s'", self->request->str);
           z_proxy_report_invalid_policy(&(self->super));
           action = SMTP_REQ_ABORT;
@@ -134,10 +134,10 @@ smtp_policy_check_request(SmtpProxy *self)
             {
               if (!z_policy_var_parse(res, "i", &action))
                 {
-		  /*LOG
-		    This message indicates that the returned value of the callback for the given request policy
-		    is invalid and Zorp aborts the connection. Check the callback function.
-		   */
+          /*LOG
+            This message indicates that the returned value of the callback for the given request policy
+            is invalid and Zorp aborts the connection. Check the callback function.
+           */
                   z_proxy_log(self, SMTP_POLICY, 1, "The verdict returned by the policy is not an int; request='%s'", self->request->str);
                   z_proxy_report_policy_abort(&(self->super));
                   action = SMTP_REQ_ABORT;
@@ -200,8 +200,8 @@ smtp_policy_check_response(SmtpProxy *self)
   if (!smtp_hash_get_type(entry, reinterpret_cast<guint *>(&action)))
     {
       /*LOG
-	This message indicates that the policy type is invalid for the given response and Zorp
-	aborts the connection. Check the 'response' attribute.
+    This message indicates that the policy type is invalid for the given response and Zorp
+    aborts the connection. Check the 'response' attribute.
        */
       z_proxy_log(self, SMTP_POLICY, 1, "Invalid response policy; request='%s', response='%s'", self->request->str, self->response->str);
       z_proxy_report_invalid_policy(&(self->super));
@@ -215,10 +215,10 @@ smtp_policy_check_response(SmtpProxy *self)
       z_policy_lock(self->super.thread);
       if (!z_policy_var_parse_tuple(entry, "i|ss", &action, &response, &response_param))
         {
-	  /*LOG
-	    This message indicates that the parameter of the response policy of the given request is invalid and Zorp aborts the connection.
-	    Check the 'response' attribute.
-	   */
+      /*LOG
+        This message indicates that the parameter of the response policy of the given request is invalid and Zorp aborts the connection.
+        Check the 'response' attribute.
+       */
           z_proxy_log(self, SMTP_POLICY, 1, "Error in response policy; request='%s', response='%s'", self->request->str, self->response->str);
           z_proxy_report_invalid_policy(&(self->super));
           action = SMTP_RSP_ABORT;
@@ -245,10 +245,10 @@ smtp_policy_check_response(SmtpProxy *self)
       z_policy_lock(self->super.thread);
       if (!z_policy_var_parse(entry, "(iO)", &action, &process_rsp))
         {
-	  /*LOG
-	    This message indicates that the parameter of the response policy of the given request is invalid and Zorp aborts the connection.
-	    Check the 'response' attribute.
-	   */
+      /*LOG
+        This message indicates that the parameter of the response policy of the given request is invalid and Zorp aborts the connection.
+        Check the 'response' attribute.
+       */
           z_proxy_log(self, SMTP_POLICY, 1, "Error in response policy; request='%s', response='%s'", self->request->str, self->response->str);
           z_proxy_report_invalid_policy(&(self->super));
           action = SMTP_RSP_ABORT;
@@ -260,10 +260,10 @@ smtp_policy_check_response(SmtpProxy *self)
             {
               if (!z_policy_var_parse(res, "i", &action))
                 {
-		  /*LOG
-		    This message indicates that the returned value of the callback for the given response policy
-		    is invalid and Zorp aborts the connection. Check the callback function.
-		   */
+          /*LOG
+            This message indicates that the returned value of the callback for the given response policy
+            is invalid and Zorp aborts the connection. Check the callback function.
+           */
                   z_proxy_log(self, SMTP_POLICY, 1, "The verdict returned by the policy is not an int; request='%s', response='%s'", self->request->str, self->response->str);
                   z_proxy_report_policy_abort(&(self->super));
                   action = SMTP_RSP_ABORT;

@@ -1443,15 +1443,15 @@ z_process_szig_walk_instance(ZInstance *inst, void *user_data)
 static int
 z_process_log_func(ZInstance *inst, char *cmd, char *param)
 {
-  ZSzigContext *ctx;						
-  int res = 0;							
+  ZSzigContext *ctx;                        
+  int res = 0;                            
                                                                 
   ctx = z_szig_context_new(inst->process_name);
-  if (ctx)							
-    {								
-      if (z_szig_logging(ctx, cmd, param, NULL, 0))		
-        res = 1;						
-      z_szig_context_destroy(ctx);				
+  if (ctx)                            
+    {                                
+      if (z_szig_logging(ctx, cmd, param, NULL, 0))        
+        res = 1;                        
+      z_szig_context_destroy(ctx);                
     }
   else
     {
@@ -1579,16 +1579,16 @@ z_process_deadlockcheck_status_instance(ZInstance *inst, void *user_data UNUSED)
 static inline int
 z_process_reload_inline(ZInstance *inst, gboolean suppress_message)
 {
-  ZSzigContext *ctx;						
-  int res = 0;							
+  ZSzigContext *ctx;                        
+  int res = 0;                            
                                                                 
   ctx = z_szig_context_new(inst->process_name);
-  if (ctx)							
-    {								
+  if (ctx)                            
+    {                                
       if (z_szig_reload(ctx, NULL, NULL, 0) &&
           z_szig_reload(ctx, "RESULT", NULL, 0))
         res = 1;
-      z_szig_context_destroy(ctx);				
+      z_szig_context_destroy(ctx);                
     }
   else
     {

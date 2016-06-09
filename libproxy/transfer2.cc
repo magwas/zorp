@@ -253,7 +253,7 @@ z_transfer2_timed_progress(gpointer user_data)
     {
       /*LOG
         This message indicates that the data-transfer is interrupted by a timed
-	progress callback and Zorp is closing the date-transfer channels.
+    progress callback and Zorp is closing the date-transfer channels.
        */
       z_proxy_log(self->owner, CORE_ERROR, 3, "Data transfer interrupted by progress;");
       z_transfer2_update_status(self, ZT2S_FAILED+ZT2S_FINISHED, TRUE);

@@ -42,9 +42,9 @@ BOOST_AUTO_TEST_CASE(test_smtp_parse_atom)
 
   /* special characters */
 #define TEST_SPECIAL(chr) do {                  \
-    str = chr;					\
-    BOOST_CHECK(smtp_parse_atom(NULL, str, &end));	\
-    BOOST_CHECK(end == str);			\
+    str = chr;                    \
+    BOOST_CHECK(smtp_parse_atom(NULL, str, &end));    \
+    BOOST_CHECK(end == str);            \
     str = "valid" chr "alsovalid";              \
     BOOST_CHECK(smtp_parse_atom(NULL, str, &end)); \
     BOOST_CHECK_EQUAL(end - str, strstr(str, chr) - str);     \

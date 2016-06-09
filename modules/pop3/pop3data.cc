@@ -191,10 +191,10 @@ pop3_data_transfer(Pop3Proxy *owner)
       switch (z_transfer2_get_stack_decision(&t->super.super))
         {
         case ZV_REJECT:
-	  /*LOG
-	    This message indicates that the stacked proxy rejected the content and Zorp
-	    rejects the response.
-	   */
+      /*LOG
+        This message indicates that the stacked proxy rejected the content and Zorp
+        rejects the response.
+       */
           z_proxy_log(owner, POP3_ERROR, 2, "Stacked proxy rejected contents; info='%s'", z_transfer2_get_stack_info(&t->super.super));
           g_snprintf(buf, sizeof(buf), "Content rejected (%s)", z_transfer2_get_stack_info(&t->super.super));
           if (owner->reject_by_mail)

@@ -164,10 +164,10 @@ typedef struct _FtpProxy
 {
   ZProxy super;
 
-  int state;		/* I/O state in the proxy */
+  int state;        /* I/O state in the proxy */
   int oldstate;         /* Where to go out from both side listening */
   enum ftp_state_enum ftp_state; /* our state in the FTP protocol */
-  unsigned long data_state;	/* data connection state */
+  unsigned long data_state;    /* data connection state */
   ZPoll *poll;
 
   /* local permitted command & answer tables */
@@ -352,7 +352,7 @@ ftp_proto_state_set(FtpProxy *self, const enum ftp_state_enum new_state)
 }
 
 #define SET_ANSWER(answer) {\
-	g_string_assign(self->answer_cmd, ftp_know_messages[answer].code);\
-	g_string_assign(self->answer_param, ftp_know_messages[answer].long_desc); }
+    g_string_assign(self->answer_cmd, ftp_know_messages[answer].code);\
+    g_string_assign(self->answer_param, ftp_know_messages[answer].long_desc); }
 
 #endif
