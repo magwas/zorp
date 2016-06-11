@@ -37,7 +37,9 @@
   while (0)
 
 void
-test_case(gint id, gchar *url_str, gboolean unicode, gboolean invalid_escape, gboolean expected_valid, gchar *scheme, gchar *user, gchar *passwd, gchar *host, guint port, gchar *file, gchar *query, gchar *fragment)
+test_case(gint id, const gchar *url_str, gboolean unicode, gboolean invalid_escape, gboolean expected_valid,
+          const gchar *scheme, const gchar *user, const gchar *passwd, const gchar *host, guint port,
+          const gchar *file, const gchar *query, const gchar *fragment)
 {
   HttpURL url;
   gchar *fail_reason = NULL;
@@ -45,7 +47,7 @@ test_case(gint id, gchar *url_str, gboolean unicode, gboolean invalid_escape, gb
   gboolean ok = TRUE, valid;
 
   http_init_url(&url);
-  valid = http_parse_url(&url, unicode, invalid_escape, FALSE, url_str, &error_reason);
+  valid = http_parse_url(&url, unicode, invalid_escape, FALSE, (char *) url_str, &error_reason);
 
   if (ok && valid != expected_valid)
     {
@@ -73,18 +75,18 @@ test_case(gint id, gchar *url_str, gboolean unicode, gboolean invalid_escape, gb
 
 struct
 {
-  gchar *url_str;
+  const gchar *url_str;
   gboolean invalid_escape;
   gboolean unicode;
   gboolean valid;
-  gchar *scheme;
-  gchar *user;
-  gchar *passwd;
-  gchar *host;
+  const gchar *scheme;
+  const gchar *user;
+  const gchar *passwd;
+  const gchar *host;
   guint port;
-  gchar *file;
-  gchar *query;
-  gchar *fragment;
+  const gchar *file;
+  const gchar *query;
+  const gchar *fragment;
 } test_table[] =
 
 #define NA NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL
