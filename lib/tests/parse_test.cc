@@ -20,10 +20,8 @@
 
 #include <glib.h>
 #include <zorp/parse.h>
-#include "testutil.h"
-
 #define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+#include "testutil.h"
 
 int test_foo(ParseState *parseState, const char* line) {
     parse_start(parseState,

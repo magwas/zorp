@@ -670,7 +670,7 @@ http_fetch_headers(HttpProxy *self, ZEndpoint side)
       for (colon = &line[name_len]; (guint) (colon - line) < line_length && *colon == ' ' && *colon != ':'; colon++)
         ;
 
-      if (*colon != ':')
+      if ((colon - line)>= line_length || *colon != ':')
         {
           /*LOG
             This message indicates that the server sent an invalid HTTP

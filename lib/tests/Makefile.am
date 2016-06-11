@@ -1,7 +1,7 @@
 LIBS=@MODULETESTS_LIBS@
 CPPFLAGS = @MODULES_CPPFLAGS@ -DBOOST_TEST_DYN_LINK=1
 
-LDADD = libtestutil.la -lboost_unit_test_framework
+LDADD = libtestutil.la -lboost_unit_test_framework #../.libs/libzorp.la
 
 AM_LDFLAGS= -Wl,--wrap=z_llog
 
@@ -18,3 +18,5 @@ TESTS += log_test
 TESTS += parse_test
 
 check_PROGRAMS = log_test parse_test
+
+TESTS = log_test parse_test

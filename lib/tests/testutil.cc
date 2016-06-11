@@ -12,6 +12,7 @@ extern "C" void __wrap_z_llog(const gchar *class_, int level, const gchar *forma
     last_log_result.log_class=class_;
     last_log_result.log_level=level;
     vsnprintf(last_log_result.formatted_msg, LOG_RESULT_LENGTH-1, format, l);
+    printf("msg: %s\n", last_log_result.formatted_msg);
     va_end(l);
 
 }

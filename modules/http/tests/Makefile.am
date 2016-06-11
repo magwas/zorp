@@ -15,6 +15,6 @@ http_split_request_SOURCES = http_split_request.cc
 
 http_split_response_SOURCES = http_split_response.cc 
 
-http_fetch_headers_SOURCES = http_fetch_headers.cc
+http_fetch_headers_SOURCES = http_fetch_headers.cc ../httphdr.cc
 
 TESTS = http_parse_url http_canon_url http_split_request http_split_response http_fetch_headers

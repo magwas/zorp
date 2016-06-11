@@ -70,5 +70,39 @@ BOOST_AUTO_TEST_CASE(unfinished_http_header_allocation_error)
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: foo\r\n"
             "00000000000000000000000000000  ");
     proxyFake->max_header_lines=10;
-    http_fetch_headers(proxyFake, EP_CLIENT);
+    BOOST_CHECK(FALSE==http_fetch_headers(proxyFake, EP_CLIENT));
+}
+
+BOOST_AUTO_TEST_CASE(correct_headers_are_processed)
+{
+    HttpProxy* proxyFake = new_proxy();
+    z_log_init("zorp test",7);\
+    z_log_change_logspec("http.*:6",NULL);\
+    proxyFake->proto_version[EP_CLIENT] = 0x0100;
+    proxyFake->super.endpoints[EP_CLIENT]=new_z_stream_line(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: foo\r\n"
+            "00000000000000000000000000000  :bar\r\n\r\n");
+    proxyFake->max_header_lines=10;
+    BOOST_CHECK(TRUE==http_fetch_headers(proxyFake, EP_CLIENT));
+    HttpHeaders headerList = proxyFake->headers[EP_CLIENT];
+    HttpHeader *header = (HttpHeader *)headerList.list->data;
+    BOOST_CHECK(NULL != header);
+    assertStringEquals("00000000000000000000000000000", header->name->str, "last header name");
+    assertStringEquals("bar", header->value->str, "last header value");
+    header = (HttpHeader *)headerList.list->next->data;
+    assertStringEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", header->name->str, "first header name");
+    assertStringEquals("foo", header->value->str, "first header value");
+}
+
+BOOST_AUTO_TEST_CASE(incorrect_headers_give_error)
+{
+    HttpProxy* proxyFake = new_proxy();
+    z_log_init("zorp test",7);\
+    z_log_change_logspec("http.*:6",NULL);\
+    proxyFake->proto_version[EP_CLIENT] = 0x0100;
+    proxyFake->super.endpoints[EP_CLIENT]=new_z_stream_line(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa foo\r\n");
+    proxyFake->max_header_lines=10;
+    BOOST_CHECK(FALSE==http_fetch_headers(proxyFake, EP_CLIENT));
+    assertStringEquals("(test_session): Error reading from peer while fetching headers;",last_log_result.formatted_msg,"log message");
 }

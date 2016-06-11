@@ -21,10 +21,8 @@
 #include <zorp/proxy.h>
 #include <zorp/parse.h>
 #include <zorp/proxy.h>
-#include "testutil.h"
-
 #define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+#include "testutil.h"
 
 BOOST_AUTO_TEST_CASE(test_z_log_2_formats_correctly)
 {

@@ -19,8 +19,6 @@
  ***************************************************************************/
 
 #define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
-
 #include "../http.h"
 #include "testutil.h"
 
@@ -40,6 +38,7 @@ HttpProxy* new_proxy() {
 }
 
 typedef struct {
+    const char* name;
     const char* input_line;
     const char* expected_response_version;
     const char* expected_response;
@@ -59,15 +58,15 @@ typedef struct {
 
 #define longResponse "HTTP/1.0 200 " StringOfLength256 "a"
 TestCase validTestCases[] = {
-        { "HTTP/1.1 200 OK", "HTTP/1.1", "200", 200, "OK" },
-        { "HTTP/1.1  200 OK", "HTTP/1.1", "200", 200, "OK" },
-        { "HTTP/1.1  200  OK", "HTTP/1.1", "200", 200, "OK" },
-        { "HTTP/1.1  200  OK ", "HTTP/1.1", "200", 200, "OK " },
-        { "HTTP/1.1  200  OK  ", "HTTP/1.1", "200", 200, "OK  " },
-        { "HTTP/1.1 404 Not Found", "HTTP/1.1", "404", 404, "Not Found" },
-        { "HTTP/1.1 400 Bad Request", "HTTP/1.1", "400", 400, "Bad Request" },
-        { longResponse, "HTTP/1.0", "200", 200, StringOfLength256},
-        {NULL, NULL,NULL, 0, NULL}
+        {"basic valid request", "HTTP/1.1 200 OK", "HTTP/1.1", "200", 200, "OK" },
+        {"two spaces between version and code", "HTTP/1.1  200 OK", "HTTP/1.1", "200", 200, "OK" },
+        {"two spaces between code and message", "HTTP/1.1  200  OK", "HTTP/1.1", "200", 200, "OK" },
+        {"space after message", "HTTP/1.1  200  OK ", "HTTP/1.1", "200", 200, "OK " },
+        {"two spaces after message", "HTTP/1.1  200  OK  ", "HTTP/1.1", "200", 200, "OK  " },
+        {"valid 404", "HTTP/1.1 404 Not Found", "HTTP/1.1", "404", 404, "Not Found" },
+        {"valid 400", "HTTP/1.1 400 Bad Request", "HTTP/1.1", "400", 400, "Bad Request" },
+        {"response with message of 255 length", longResponse, "HTTP/1.0", "200", 200, StringOfLength256},
+        {NULL, NULL, NULL,NULL, 0, NULL}
 };
 
 BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
@@ -82,63 +81,58 @@ BOOST_AUTO_TEST_CASE(test_correct_response_is_parsed_correctly)
         last_log_result.msg="no log arrived";
         http_split_response(proxyFake, inputLine, strlen(inputLine));
 
-        BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->response_msg,g_string_new(validTestCases[n].expected_response_msg)),
-                "response message mismatch"
-                "\nexpected message: " << validTestCases[n].expected_response_msg <<
-                "\n actual message  :" << proxyFake->response_msg->str <<
-                "\n line: " << inputLine);
-        BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response_version,validTestCases[n].expected_response_version),
-                "response version mismatch"
-                "\n expected version: " << validTestCases[n].expected_response_version <<
-                "\n actual version  :" << proxyFake->response_version <<
-                "\n line: " << inputLine);
-        BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->response,validTestCases[n].expected_response),
-                "response mismatch"
-                "\n expected response: " << validTestCases[n].expected_response <<
-                "\n actual response  :" << proxyFake->response <<
-                "\n line: " << inputLine);
-        BOOST_CHECK_MESSAGE(proxyFake->response_code == validTestCases[n].expected_response_code,
-                "response code mismatch"
-                "\n expected code: " << validTestCases[n].expected_response_code <<
-                "\n actual code  :" << proxyFake->response_code <<
-                "\n line: " << inputLine);
+        assertStringEquals(
+                proxyFake->response_msg->str, validTestCases[n].expected_response_msg,
+                "response message mismatch", validTestCases[n].name);
+        assertStringEquals(
+                proxyFake->response_version, validTestCases[n].expected_response_version,
+                "response version mismatch", validTestCases[n].name);
+        assertStringEquals(
+                proxyFake->response, validTestCases[n].expected_response,
+                "response mismatch", validTestCases[n].name);
+        assertIntEquals(
+                proxyFake->response_code, validTestCases[n].expected_response_code,
+                "response code mismatch", validTestCases[n].name);
 
         n++;
     } while (1);
 }
 
 FailingTestCase failingCases[] = {
-        { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        {"no spaces", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "(test_session): Response code is missing; line='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
                 HTTP_VIOLATION, 1},
-        { "aaaa 200 OK",
+        {"not starting with HTTP", "aaaa 200 OK",
                 "(test_session): Invalid HTTP status line; line='aaaa 200 OK'",
                 HTTP_RESPONSE, 6},
-        { "HTTP",
+        {"just a HTTP", "HTTP",
                 "(test_session): Response code is missing; line='HTTP'",
                 HTTP_VIOLATION, 1},
-        { "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        {"starts with HTTP but no spaces", "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "(test_session): Response code is missing; line='HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
                 HTTP_VIOLATION, 1},
-        { "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK",
+        {"too long response version", "HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK",
                 "(test_session): Response version is too long; line='HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 200 OK'",
                 HTTP_VIOLATION, 1},
-        { "HTTP/1.1 20 OK",
+        {"two digits response code", "HTTP/1.1 20 OK",
                 "(test_session): Response code is not three digits; line='HTTP/1.1 20 OK'",
                 HTTP_VIOLATION, 1},
-        { "HTTP/1.1 20f OK",
+        {"3  char response code with non-digit", "HTTP/1.1 20f OK",
                 "(test_session): Response code is not three digits; line='HTTP/1.1 20f OK'",
                 HTTP_VIOLATION, 1},
-        { "HTTP/1.0 aaa OK",
+        {"3 char response code, none are digits", "HTTP/1.0 aaa OK",
                 "(test_session): Response code is not a number; line='HTTP/1.0 aaa OK'",
                 HTTP_VIOLATION, 1},
-        { "HTTP 2001 OK",
+        {"4 digits response code", "HTTP 2001 OK",
                 "(test_session): Response code is too long; line='HTTP 2001 OK'",
                 HTTP_VIOLATION, 1},
-        { "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        {"no response message", "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "(test_session): Response message is missing; line='HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
                 HTTP_VIOLATION, 1},
-        {NULL, NULL, NULL, 0}
+        {"no response message, ends with space", "HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ",
+                "(test_session): Response code is too long; line='HTTP aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa '",
+                HTTP_VIOLATION, 1},
+        {NULL, NULL, NULL, NULL, 0}
 };
 
 BOOST_AUTO_TEST_CASE(test_incorrect_response_causes_error_return)

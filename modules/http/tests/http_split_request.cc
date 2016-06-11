@@ -58,6 +58,7 @@ BOOST_AUTO_TEST_CASE(test_split_http_request)
 }
 
 typedef struct {
+    const char* name;
     const char* input_line;
     const char* expected_method;
     const char* expected_url;
@@ -65,17 +66,17 @@ typedef struct {
 } TestCase;
 
 TestCase validTestCases[] = {
-        { "GET http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET  http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET                http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET                http://example.com  HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET                http://example.com                            HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET                http://example.com                            HTTP/1.0 ", "GET", "http://example.com", "HTTP/1.0" },
-        { "GET http://example.com  1234567890abcd",  "GET", "http://example.com", "1234567890abcd"},
-        { "GET http://example.com  1234567890abcd ",  "GET", "http://example.com", "1234567890abcd"},
-        { "GET http://example.com  1234567890abcde",  "GET", "http://example.com", "1234567890abcde"},
-        { "GET http://example.com  1234567890abcde ",  "GET", "http://example.com", "1234567890abcde"},
-        {NULL, NULL,NULL, NULL}
+        { "simple GET", "GET http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
+        { "two spaces after method", "GET  http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
+        { "lot of spaces after method", "GET                http://example.com HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
+        { "two spaces between method and url", "GET                http://example.com  HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
+        { "lot of spaces between method and url", "GET                http://example.com                            HTTP/1.0", "GET", "http://example.com", "HTTP/1.0" },
+        { "space after version", "GET                http://example.com                            HTTP/1.0 ", "GET", "http://example.com", "HTTP/1.0" },
+        { "version length is 14", "GET http://example.com  1234567890abcd",  "GET", "http://example.com", "1234567890abcd"},
+        { "version length 14, space after", "GET http://example.com  1234567890abcd ",  "GET", "http://example.com", "1234567890abcd"},
+        { "version lenght 15", "GET http://example.com  1234567890abcde",  "GET", "http://example.com", "1234567890abcde"},
+        { "version length 15,space after", "GET http://example.com  1234567890abcde ",  "GET", "http://example.com", "1234567890abcde"},
+        {NULL, NULL, NULL,NULL, NULL}
 };
 
 BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
@@ -91,24 +92,17 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
         HttpProxy* proxyFake = new_proxy();
         last_log_result.msg="no log";
         gboolean returnValue = http_split_request(proxyFake,inputLine,strlen(inputLine));
-        BOOST_CHECK_MESSAGE(TRUE==returnValue,
-                "error return for\n input: " <<inputLine <<
-                "\n log: " <<last_log_result.msg);
-        BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_method,g_string_new(validTestCases[n].expected_method)),
-                "request method mismatch"
-                "\n expected method: " << validTestCases[n].expected_method <<
-                "\n actual method  :" << proxyFake->request_method->str <<
-                "\n line: " << inputLine);
-        BOOST_CHECK_MESSAGE(TRUE==g_string_equal(proxyFake->request_url,g_string_new(validTestCases[n].expected_url)),
-                "request url mismatch"
-                "\n expected url: " << validTestCases[n].expected_url <<
-                "\n actual url  :" << proxyFake->request_url->str <<
-                "\n line: " << inputLine);
-        BOOST_CHECK_MESSAGE(0==strcmp(proxyFake->request_version,validTestCases[n].expected_version),
-                "request version mismatch"
-                "\nexpected version: " << validTestCases[n].expected_version <<
-                "\n actual version  :" << proxyFake->request_version <<
-                "\n line: " << inputLine);
+        assertTrue(returnValue,"fail return", validTestCases[n].expected_method);
+        assertStringEquals(
+                proxyFake->request_method->str, validTestCases[n].expected_method,
+                "request method mismatch", validTestCases[n].name);
+        assertStringEquals(
+                proxyFake->request_url->str, validTestCases[n].expected_url,
+                "request url mismatch", validTestCases[n].name);
+        assertStringEquals(
+                proxyFake->request_version, validTestCases[n].expected_version,
+                "request version mismatch", validTestCases[n].name);
+
         n++;
     } while (1);
 }
@@ -170,23 +164,23 @@ const char* extralongString2 = "GET "
         " HTTP/1.0"
         ;
 FailingTestCase failingCases[] = {
-        { " http://example.com HTTP/1.0", "(test_session): Request have no method; line=' http://example.com HTTP/1.0'",
+        {"no request method", " http://example.com HTTP/1.0", "(test_session): Request have no method; line=' http://example.com HTTP/1.0'",
         HTTP_VIOLATION, 1},
-        { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(test_session): Request have no spaces; line='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+        {"no spaces", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "(test_session): Request have no spaces; line='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
         HTTP_VIOLATION, 1},
-        { "GET ", "(test_session): URL missing; line='GET '",
+        {"just a GET", "GET ", "(test_session): URL missing; line='GET '",
         HTTP_VIOLATION, 1},
-        { extralongString,
+        {"long string without spaces", extralongString,
                 "(test_session): URL is not followed by space; line='GET aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         HTTP_VIOLATION, 1},
-        { extralongString2,
+        {"too long URL", extralongString2,
                 "(test_session): URL is too long; line='GET aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         HTTP_VIOLATION, 1},
-        { "GET http://example.com  aaaaaaaaaaaaaaaa", "(test_session): http version is too long; line='GET http://example.com  aaaaaaaaaaaaaaaa'",
+        {"too long http version not followed by space", "GET http://example.com  aaaaaaaaaaaaaaaa", "(test_session): http version is too long; line='GET http://example.com  aaaaaaaaaaaaaaaa'",
         HTTP_VIOLATION, 1},
-        { "GET http://example.com  1234567890abcdef ", "(test_session): http version is too long; line='GET http://example.com  1234567890abcdef '",
+        {"too long http version followed by space", "GET http://example.com  1234567890abcdef ", "(test_session): http version is too long; line='GET http://example.com  1234567890abcdef '",
         HTTP_VIOLATION, 1},
-        {NULL, NULL, NULL, 9}
+        {NULL, NULL, NULL, NULL, 9}
 };
 
 BOOST_AUTO_TEST_CASE(test_incorrect_line_causes_error_return)
