@@ -983,25 +983,21 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
   g_string_truncate(self->request_url, 0);
 
 
-  ParseState parseState;
-  parse_start(&parseState,
-          line, bufferLength);
-
-  ParseState *pParseState=&parseState;
+  LineParser parser = LineParser(line, bufferLength);
 
   try
   {
-      parse_until_space_to_GString(pParseState, self->request_method, msg_request_have_no_spaces,
+      parser.parse_until_space_to_GString(self->request_method, msg_request_have_no_spaces,
                 msg_request_have_no_method, NULL, 0);
 
-      parse_until_spaces_end(msg_url_missing, pParseState);
+      parser.parse_until_spaces_end(msg_url_missing);
 
-      parse_until_space_to_GString(pParseState, self->request_url, msg_url_is_not_followed_by_space,
+      parser.parse_until_space_to_GString(self->request_url, msg_url_is_not_followed_by_space,
                 msg_request_have_no_method, msg_url_is_too_long, self->max_url_length);
 
-      parse_until_spaces_end(msg_http_version_missing, pParseState);
+      parser.parse_until_spaces_end(msg_http_version_missing);
 
-      parse_until_space_to_gchar(pParseState, self->request_version,
+      parser.parse_until_space_to_gchar(self->request_version,
                   NULL, msg_http_version_missing,
                 msg_http_version_too_long, sizeof(self->request_version)-1);
   } catch(std::exception &e) {
@@ -1032,13 +1028,10 @@ http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
   self->response[0] = 0;
   g_string_truncate(self->response_msg, 0);
 
-  ParseState parseState;
-  parse_start(&parseState,
-          line, bufferLength);
-  ParseState *pParseState=&parseState;
+  LineParser parser = LineParser(line, bufferLength);
 
   try {
-      parse_until_space_to_gchar(pParseState, self->response_version,
+      parser.parse_until_space_to_gchar(self->response_version,
                   msg_response_code_missing, msg_response_version_missing,
                 msg_response_version_too_long, sizeof(self->response_version)-1);
 
@@ -1051,9 +1044,9 @@ http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
           z_proxy_return(self, FALSE);
         }
 
-      parse_until_spaces_end(msg_response_code_missing, pParseState);
+      parser.parse_until_spaces_end(msg_response_code_missing);
 
-      parse_until_space_to_gchar(pParseState, self->response,
+      parser.parse_until_space_to_gchar(self->response,
                   msg_response_message_missing, msg_response_code_missing,
                 msg_response_code_too_long, sizeof(self->response)-1);
 
@@ -1078,9 +1071,9 @@ http_split_response(HttpProxy *self, const gchar *line, gint bufferLength)
           z_proxy_return(self, FALSE);
         }
 
-      parse_until_spaces_end(msg_response_message_missing, pParseState);
+      parser.parse_until_spaces_end(msg_response_message_missing);
 
-      parse_until_end_to_GString(pParseState, self->response_msg,
+      parser.parse_until_end_to_GString(self->response_msg,
                   msg_response_message_missing, 255);
 
   } catch(std::exception &e) {

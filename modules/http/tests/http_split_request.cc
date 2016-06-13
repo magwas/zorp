@@ -92,15 +92,18 @@ BOOST_AUTO_TEST_CASE(test_correct_line_is_parsed_correctly)
         HttpProxy* proxyFake = new_proxy();
         last_log_result.msg="no log";
         gboolean returnValue = http_split_request(proxyFake,inputLine,strlen(inputLine));
-        assertTrue(returnValue,"fail return", validTestCases[n].expected_method);
+        assertTrue(returnValue,"fail return", validTestCases[n].name);
         assertStringEquals(
-                proxyFake->request_method->str, validTestCases[n].expected_method,
+                validTestCases[n].expected_method,
+                proxyFake->request_method->str,
                 "request method mismatch", validTestCases[n].name);
         assertStringEquals(
-                proxyFake->request_url->str, validTestCases[n].expected_url,
+                validTestCases[n].expected_url,
+                proxyFake->request_url->str,
                 "request url mismatch", validTestCases[n].name);
         assertStringEquals(
-                proxyFake->request_version, validTestCases[n].expected_version,
+                validTestCases[n].expected_version,
+                proxyFake->request_version,
                 "request version mismatch", validTestCases[n].name);
 
         n++;
