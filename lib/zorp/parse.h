@@ -1,3 +1,4 @@
+#include <zorp/ParserException.h>
 typedef struct {
       const char *line;
       gint bufferLength;
@@ -9,6 +10,7 @@ typedef struct {
       const char * spaceAt;
       OrigBuffer origBuffer;
  } ParseState;
+
 
 extern const char * memcspn(const char *segment, char segmentChar, signed int length);
 

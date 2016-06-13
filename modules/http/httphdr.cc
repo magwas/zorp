@@ -24,7 +24,32 @@
 #include "http.h"
 
 #include <zorp/log.h>
+#include <zorp/parse.h>
 #include <ctype.h>
+
+/*LOG
+ This message indicates that the server sent an invalid HTTP
+ header.
+ */
+const char* INVALID_HTTP_HEADER = "Invalid HTTP header";
+
+/*LOG
+ This message indicates that Zorp fetched an invalid header from the server.
+ It is likely caused by a buggy server.
+ */
+const char* FIRST_HEADER_STARTS_WITH_WHITE_SPACE = "First header starts with white space";
+
+/*LOG
+  This message indicates that the server tried to send more header
+  lines, than the allowed maximum.  Check the max_header_lines
+  attribute.
+*/
+const char* TOO_MANY_HEADER_LINES_MAX_HEADER_LINES_D = "Too many header lines; max_header_lines='%d'";
+/*LOG
+  This message indicates that Zorp was unable to fetch headers
+  from the server.  Check the permit_null_response attribute.
+*/
+const char* ERROR_READING_FROM_PEER_WHILE_FETCHING_HEADERS = "Error reading from peer while fetching headers";
 
 /* these headers are not allowed to be duplicated, the first header is
  * used, the rest is dropped. All headers that is likely to be used
@@ -100,6 +125,57 @@ http_log_headers(HttpProxy *self, ZEndpoint side, const gchar *tag)
     }
 }
 
+HttpHeader*
+http_initial_create_header (const gchar* name, gint name_len, gint value_len, gchar* value)
+{
+    HttpHeader *h;
+    h = g_new0(HttpHeader, 1);
+    h->name = g_string_sized_new (name_len + 1);
+    g_string_assign_len (h->name, name, name_len);
+    h->value = g_string_sized_new (value_len + 1);
+    g_string_assign_len (h->value, value, value_len);
+    h->present = TRUE;
+    return h;
+}
+
+bool
+find_in_smuggle_headers (HttpHeader* h)
+{
+    guint i;
+    for (i = 0; i < sizeof(smuggle_headers) / sizeof(smuggle_headers[0]); i++)
+        if (strcmp (smuggle_headers[i], h->name->str) == 0)
+            return true;
+    return false;
+}
+
+HttpHeader*
+http_finalize_header (HttpHeaders* hdrs, HttpHeader* h)
+{
+    HttpHeader* orig;
+    if (!http_lookup_header (hdrs, h->name->str, &orig))
+    {
+        hdrs->list = g_list_prepend (hdrs->list, h);
+        g_hash_table_insert (hdrs->hash, h->name->str, hdrs->list);
+    }
+    else
+    {
+        bool found = find_in_smuggle_headers (h);
+        if (false == found)
+        {
+            hdrs->list = g_list_prepend (hdrs->list, h);
+        }
+        else
+        {
+            z_log(NULL, HTTP_VIOLATION, 3,
+                  "Possible smuggle attack, removing header duplication; header='%.*s', value='%.*s', prev_value='%.*s'", h->name->len,
+                  h->name->str, h->value->len, h->value->str, (gint ) orig->value->len, orig->value->str);
+            http_header_free (h);
+            h = NULL;
+        }
+    }
+    return h;
+}
+
 /* duplicated headers are simply put on the list and not inserted into
    the hash, thus looking up a header by name always results the first
    added header */
@@ -108,50 +184,9 @@ HttpHeader *
 http_add_header(HttpHeaders *hdrs, const gchar *name, gint name_len, gchar *value, gint value_len)
 {
   HttpHeader *h;
-  HttpHeader *orig;
 
-  h = g_new0(HttpHeader, 1);
-  h->name = g_string_sized_new(name_len + 1);
-
-  g_string_assign_len(h->name, name, name_len);
-
-  h->value = g_string_sized_new(value_len + 1);
-  g_string_assign_len(h->value, value, value_len);
-  h->present = TRUE;
-
-  if (!http_lookup_header(hdrs, h->name->str, &orig))
-    {
-      hdrs->list = g_list_prepend(hdrs->list, h);
-      g_hash_table_insert(hdrs->hash, h->name->str, hdrs->list);
-    }
-  else
-    {
-      guint i;
-
-      for (i = 0; i < sizeof(smuggle_headers) / sizeof(smuggle_headers[0]); i++)
-        {
-          if (strcmp(smuggle_headers[i], h->name->str) == 0)
-            {
-              http_header_free(h);
-              h = NULL;
-              break;
-            }
-        }
-
-      if (h)
-        {
-          /* not found in smuggle_headers */
-          hdrs->list = g_list_prepend(hdrs->list, h);
-        }
-      else
-        {
-          z_log(NULL, HTTP_VIOLATION, 3,
-                "Possible smuggle attack, removing header duplication; header='%.*s', value='%.*s', prev_value='%.*s'",
-                name_len, name, value_len, value, (gint) orig->value->len, orig->value->str);
-        }
-    }
-
-  return h;
+  h = http_initial_create_header (name, name_len, value_len, value);
+  return http_finalize_header (hdrs, h);
 }
 
 static gboolean
@@ -586,132 +621,117 @@ http_filter_headers(HttpProxy *self, ZEndpoint side, HttpHeaderFilter filter)
   z_proxy_return(self, TRUE);
 }
 
+
+enum HttpHeaderStatus {
+    normalLine,
+    lastLine,
+    skipLine,
+    continuationLine
+};
+
+HttpHeaderStatus http_header_parse_one_line (HttpProxy* self, HttpHeader* last_hdr, HttpHeader *& newHeader,
+                                             gchar* line,gsize line_length)
+{
+    gchar *colon, c;
+    guint name_len;
+    gchar* value;
+
+    if (line_length == 0)
+        return lastLine;
+
+    if (*line == ' ' || *line == '\t')
+    {
+        while (line_length && (*line == ' ' || *line == '\t'))
+        {
+            line++;
+            line_length--;
+        }
+        if (last_hdr) {
+            g_string_append_len (last_hdr->value, line, line_length);
+            return continuationLine;
+        }
+        else
+            throw new ParserException (FIRST_HEADER_STARTS_WITH_WHITE_SPACE, line, line_length);
+    }
+    name_len = 0;
+    c = line[name_len];
+    while (name_len < line_length
+            && !(c == '(' || c == ')' || c == '<' || c == '>' || c == '@' || c == ',' || c == ';' || c == ':' || c == '\\' || c == '"'
+                    || c == '/' || c == '[' || c == ']' || c == '?' || c == '=' || c == '{' || c == '}' || c == ' ' || c == '\t'))
+    {
+        name_len++;
+        c = line[name_len];
+    }
+    for (colon = &line[name_len]; (guint) ((colon - line)) < line_length && *colon == ' ' && *colon != ':'; colon++)
+        ;
+
+    if ((colon - line) >= line_length || *colon != ':')
+    {
+        ParserException* e = new ParserException (INVALID_HTTP_HEADER, line, line_length);
+        if (self->strict_header_checking)
+            throw e;
+        else
+            z_proxy_log(self, HTTP_VIOLATION, 2, "%s", e->what ());
+        return skipLine;
+    }
+    /* strip trailing white space */
+    while (line_length > 0 && line[line_length - 1] == ' ')
+        line_length--;
+    for (value = colon + 1; (guint) ((value - line)) < line_length && *value == ' '; value++)
+        ;
+
+    newHeader = http_initial_create_header (line, name_len, &line[line_length] - value, value);
+    return normalLine;
+}
+
+HttpHeaderStatus http_fetch_one_header_line (HttpProxy* self, ZEndpoint side, HttpHeaders* headers, HttpHeader*& last_hdr, guint& count)
+{
+    gchar* line;
+    gsize line_length;
+    GIOStatus res;
+    HttpHeaderStatus state;
+    HttpHeader *h;
+    res = z_stream_line_get (self->super.endpoints[side], &line, &line_length, NULL);
+    if (res != G_IO_STATUS_NORMAL)
+    {
+        if (res == G_IO_STATUS_EOF && side == EP_SERVER && self->permit_null_response)
+            return lastLine;
+
+        throw new ParserException (ERROR_READING_FROM_PEER_WHILE_FETCHING_HEADERS, line, line_length);
+    }
+    state = http_header_parse_one_line (self, last_hdr, h, line, line_length);
+    count++;
+    if (normalLine == state)
+        last_hdr=http_finalize_header (headers, h);
+
+    if (count > self->max_header_lines)
+        throw new ParserException (line, line_length, TOO_MANY_HEADER_LINES_MAX_HEADER_LINES_D, self->max_header_lines);
+    return state;
+}
+
 gboolean
 http_fetch_headers(HttpProxy *self, ZEndpoint side)
 {
-  HttpHeaders *headers = &self->headers[side];
-  gchar *line;
-  GIOStatus res;
-  gsize line_length;
-  guint count = 0;
-  HttpHeader *last_hdr = NULL;
+    HttpHeaders *headers = &self->headers[side];
+    guint count = 0;
+    HttpHeader *last_hdr = NULL;
 
-  z_proxy_enter(self);
-  http_clear_headers(headers);
+    z_proxy_enter(self);
+    http_clear_headers(headers);
 
-  /* check if we have to fetch request headers */
-  if (self->proto_version[side] < 0x0100)
-    z_proxy_return(self, TRUE);
+    if (self->proto_version[side] < 0x0100)
+        z_proxy_return(self, TRUE);
 
-  while (1)
-    {
-      gchar *colon, *value, c;
-      guint name_len;
-
-      res = z_stream_line_get(self->super.endpoints[side], &line, &line_length, NULL);
-
-      if (res != G_IO_STATUS_NORMAL)
-        {
-          if (res == G_IO_STATUS_EOF && side == EP_SERVER && self->permit_null_response)
-            break;
-
-          /*LOG
-            This message indicates that Zorp was unable to fetch headers
-            from the server.  Check the permit_null_response attribute.
-          */
-          z_proxy_log(self, HTTP_ERROR, 3, "Error reading from peer while fetching headers;");
-          z_proxy_return(self, FALSE);
-        }
-
-      if (line_length == 0)
-        break;
-
-      if (*line == ' ' || *line == '\t')
-        {
-          /* continuation line */
-          /* skip whitespace */
-          while (line_length && (*line == ' ' || *line == '\t'))
-            {
-              line++;
-              line_length--;
-            }
-
-          if (last_hdr)
-            {
-              g_string_append_len(last_hdr->value, line, line_length);
-            }
-          else
-            {
-              /* first line is a continuation line? bad */
-              /*LOG
-                This message indicates that Zorp fetched an invalid header from the server.
-                It is likely caused by a buggy server.
-              */
-              z_proxy_log(self, HTTP_VIOLATION, 2, "First header starts with white space; line='%.*s", (gint) line_length, line);
-              z_proxy_return(self, FALSE);
-            }
-
-          goto next_header;
-        }
-
-      name_len = 0;
-      c = line[name_len];
-
-      while (name_len < line_length &&
-             !(c == '(' || c == ')' || c == '<' || c == '>' || c == '@' ||
-               c == ',' || c == ';' || c == ':' || c == '\\' || c == '"' ||
-               c == '/' || c == '[' || c == ']' || c == '?' || c == '=' ||
-               c == '{' || c == '}' || c == ' ' || c == '\t'))
-        {
-          name_len++;
-          c = line[name_len];
-        }
-
-      for (colon = &line[name_len]; (guint) (colon - line) < line_length && *colon == ' ' && *colon != ':'; colon++)
-        ;
-
-      if ((colon - line)>= line_length || *colon != ':')
-        {
-          /*LOG
-            This message indicates that the server sent an invalid HTTP
-            header.
-          */
-          z_proxy_log(self, HTTP_VIOLATION, 2, "Invalid HTTP header; line='%.*s'", (gint) line_length, line);
-
-          if (self->strict_header_checking)
-            z_proxy_return(self, FALSE);
-
-          goto next_header;
-        }
-
-      /* strip trailing white space */
-      while (line_length > 0 && line[line_length - 1] == ' ')
-        line_length--;
-
-      for (value = colon + 1; (guint) (value - line) < line_length && *value == ' '; value++)
-        ;
-
-      last_hdr = http_add_header(headers, line, name_len, value, &line[line_length] - value);
-
-    next_header:
-      count++;
-
-      if (count > self->max_header_lines)
-        {
-          /* too many headers */
-          /*LOG
-            This message indicates that the server tried to send more header
-            lines, than the allowed maximum.  Check the max_header_lines
-            attribute.
-          */
-          z_proxy_log(self, HTTP_POLICY, 2, "Too many header lines; max_header_lines='%d'", self->max_header_lines);
-          z_proxy_return(self, FALSE);
-        }
+    try {
+        while (lastLine != http_fetch_one_header_line (self, side, headers, last_hdr, count));
+    } catch(ParserException *e) {
+        z_proxy_log(self, HTTP_VIOLATION, 2, "%s", e->what());
+        z_proxy_return(self, FALSE);
     }
 
-  /*  g_string_append(headers, "\r\n"); */
-  http_log_headers(self, side, "prefilter");
-  z_proxy_return(self, TRUE);
+    /*  g_string_append(headers, "\r\n"); */
+    http_log_headers(self, side, "prefilter");
+    z_proxy_return(self, TRUE);
 }
 
 gboolean

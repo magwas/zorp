@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <glib.h>
+#include <zorp/proxy.h>
 #include <zorp/parse.h>
 #define BOOST_TEST_MAIN
 #include "testutil.h"

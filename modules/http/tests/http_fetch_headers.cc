@@ -283,6 +283,7 @@ BOOST_AUTO_TEST_CASE(smuggled_headers_are_eliminated)
     for(int n=0;smugglingCases[n].name != NULL; n++)
     {
         HttpProxy* proxyFake = new_proxy();
+        strcpy(last_log_result.formatted_msg,"no error");
         proxyFake->proto_version[EP_CLIENT] = 0x0100;
         proxyFake->super.endpoints[EP_CLIENT]=new_z_stream_line(smugglingCases[n].input,smugglingCases[n].name);
 
@@ -310,7 +311,7 @@ FailingTestCase failingCases[] = {
         {"space before first header",
             " Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 \r\n"
             "Keep-Alive: 300\r\n\r\n",
-            "(test_session): First header starts with white space; line='Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 ",
+            "(test_session): First header starts with white space; line='Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 '",
             HTTP_VIOLATION, 2,
         },
 
@@ -324,6 +325,7 @@ BOOST_AUTO_TEST_CASE(correct_headers_are_processed)
     for(int n=0;correctCases[n].name != NULL; n++)
     {
         HttpProxy* proxyFake = new_proxy();
+        strcpy(last_log_result.formatted_msg,"no error");
         proxyFake->proto_version[EP_CLIENT] = 0x0100;
         proxyFake->super.endpoints[EP_CLIENT]=new_z_stream_line(correctCases[n].input, correctCases[n].name);
 
@@ -371,7 +373,7 @@ BOOST_AUTO_TEST_CASE(null_response_isnt_permitted_on_server_side_without_permit_
             "","null_response_isnt_permitted_on_server_side_without_permit_null_response");
     proxyFake->permit_null_response=FALSE;
     BOOST_CHECK(FALSE==http_fetch_headers(proxyFake, EP_SERVER));
-    assertStringEquals("(test_session): Error reading from peer while fetching headers;",last_log_result.formatted_msg,"log message");
+    assertStringEquals("(test_session): Error reading from peer while fetching headers; line=''",last_log_result.formatted_msg,"log message");
 }
 
 BOOST_AUTO_TEST_CASE(strict_header_checking_aborts_bad_headers)
@@ -404,7 +406,7 @@ BOOST_AUTO_TEST_CASE(too_many_headers_causes_error)
             "too_many_headers_causes_error");
     proxyFake->max_header_lines=2;
     BOOST_CHECK(FALSE==http_fetch_headers(proxyFake, EP_CLIENT));
-    assertStringEquals("(test_session): Too many header lines; max_header_lines='2'",
+    assertStringEquals("(test_session): Too many header lines; max_header_lines='2'; line='foo: 300'",
                        last_log_result.formatted_msg,"log message");
 
 }

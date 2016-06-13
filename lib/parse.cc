@@ -1,27 +1,6 @@
 #include <zorp/zorp.h>
 #include <zorp/proxy.h>
 #include <zorp/parse.h>
-#include <boost/format.hpp>
-
-class ParserException: public std::exception
-{
-public:
-    ParserException(const char *error_message,
-            const char *line, gint bufferLength) {
-        if(-1 == asprintf(&message,"%s; line='%.*s'", error_message, bufferLength, line))
-        {
-            message = (char *)"error occured while formatting message";
-        }
-    }
-    ~ParserException() {
-        free(message);
-    }
-    const char* what() const _GLIBCXX_USE_NOEXCEPT override {
-        return this->message;
-    }
-private:
-    char *message;
-};
 
 const char * memcspn(const char *segment, char segmentChar, signed int length) {
     while (length > 0 && (*segment == segmentChar)) {

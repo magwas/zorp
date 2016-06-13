@@ -31,5 +31,6 @@ libzorp_la_SOURCES = \
 	certchain.cc pyx509chain.cc \
 	session.cc \
 	pyencryption.cc\
-	parse.cc
+	parse.cc\
+	ParserException.cc
 
