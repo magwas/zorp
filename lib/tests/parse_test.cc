@@ -227,3 +227,36 @@ BOOST_AUTO_TEST_CASE(parse_until_end_to_GString_returns_FALSE_and_sets_zeroLengt
                     zeroLength, 10),
         "zero length; line='   token'");
 }
+
+BOOST_AUTO_TEST_CASE(isAt_returns_true_if_the_character_at_stringAt_is_in_candidates)
+{
+    LineParser parser = LineParser(
+            "   token",
+            8);
+    parser.parse_until_spaces_end(noSpaces);
+    BOOST_CHECK(TRUE==parser.isAt("asdtfg"));
+    BOOST_CHECK(TRUE==parser.isAt("tfg"));
+    BOOST_CHECK(TRUE==parser.isAt("asdt"));
+    BOOST_CHECK(TRUE==parser.isAt("t"));
+}
+
+BOOST_AUTO_TEST_CASE(isAt_returns_false_if_the_character_at_stringAt_is_not_in_candidates)
+{
+    LineParser parser = LineParser(
+            "   token",
+            8);
+    parser.parse_until_spaces_end(noSpaces);
+    BOOST_CHECK(FALSE==parser.isAt("asdfg"));
+    BOOST_CHECK(FALSE==parser.isAt("fg"));
+    BOOST_CHECK(FALSE==parser.isAt("a"));
+    BOOST_CHECK(FALSE==parser.isAt(""));
+}
+
+BOOST_AUTO_TEST_CASE(isAt_is_FALSE_for_empty_string)
+{
+    LineParser parser = LineParser(
+            ":",
+            0);
+    BOOST_CHECK(FALSE==parser.isAt(":"));
+    BOOST_CHECK(FALSE==parser.isAt(':'));
+}

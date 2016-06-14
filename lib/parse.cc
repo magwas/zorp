@@ -12,9 +12,12 @@ const char * memcspn(const char *segment, char segmentChar, signed int length) {
     return segment;
 }
 
-LineParser::LineParser(
-        const gchar* line,
-        gint bufferLength)
+LineParser::LineParser() {
+    newLine(NULL, 0);
+}
+
+void
+LineParser::newLine (const gchar* line, gint bufferLength)
 {
     length = bufferLength;
     stringAt = line;
@@ -23,6 +26,16 @@ LineParser::LineParser(
     origBuffer.bufferLength = bufferLength;
 }
 
+LineParser::LineParser(
+        const gchar* line,
+        gint bufferLength)
+{
+    newLine (line, bufferLength);
+}
+
+LineParser::~LineParser() {
+
+}
 void LineParser::_parseToSpace(
         const char* noSpaceAfterMsg,
         const char* zeroLengthMsg,
@@ -100,4 +113,75 @@ void LineParser::parse_until_spaces_end(const char *noStringReached) {
     }
     size_t segmentLength2 = stringAt - spaceAt;
     length -= segmentLength2;
+}
+
+gboolean LineParser::isAt(const char *candidates) {
+    return length && NULL != strchr(candidates,*stringAt);
+}
+
+gboolean LineParser::isAt(const char candidate) {
+    return length && *stringAt == candidate;
+}
+
+void LineParser::skipChars (const char* candidates)
+{
+    while (length && isAt (candidates))
+    {
+        stringAt++;
+        length--;
+    }
+}
+void LineParser::skipChars (char candidate)
+{
+    while (length && isAt (candidate))
+    {
+        stringAt++;
+        length--;
+    }
+}
+void LineParser::skipUntil (const char* delimiters)
+{
+    while (length && !isAt (delimiters))
+    {
+        stringAt++;
+        length--;
+    }
+}
+void LineParser::skipOne ()
+{
+    stringAt++;
+    length--;
+}
+void LineParser::stripEnd ()
+{
+    while (length && stringAt[length - 1] == ' ')
+        length--;
+}
+
+GString * LineParser::makeGString() {
+	return makeGString(stringAt, length);
+}
+GString * LineParser::makeGString(const char* prt, gsize stringLength)
+{
+	GString *value = g_string_sized_new (stringLength + 1);
+	g_string_assign_len (value, prt, stringLength);
+	return value;
+}
+
+GString* LineParser::toGStringUntilDelimiter(const char* delimiter) {
+	const char* namePtr = stringAt;
+	skipUntil(delimiter);
+	GString* r = makeGString(namePtr, stringAt - namePtr);
+	return r;
+}
+
+GString* LineParser::stripToGString() {
+	skipChars(' ');
+	stripEnd();
+	GString* r = makeGString(stringAt, length);
+	return r;
+}
+
+gboolean LineParser::isEmpty() {
+	return length == 0;
 }

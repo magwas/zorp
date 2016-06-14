@@ -175,6 +175,19 @@ CorrectTestCase correctCases[] = {
             "Accept-Cha\x07trset", "ISO-8859-1",
             "Keep-Alive", "300",
         },
+        {"no value after colon",
+            "Accept-Charset  :\r\n"
+            "Keep-Alive: 300\r\n\r\n",
+            "Accept-Charset","",
+            "Keep-Alive", "300",
+        },
+        {"space but no value after colon",
+            "Accept-Charset  :  \r\n"
+            "Keep-Alive: 300\r\n\r\n",
+            "Accept-Charset","",
+            "Keep-Alive", "300",
+        },
+
         {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -311,10 +324,9 @@ FailingTestCase failingCases[] = {
         {"space before first header",
             " Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 \r\n"
             "Keep-Alive: 300\r\n\r\n",
-            "(test_session): First header starts with white space; line='Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 '",
+            "(test_session): First header starts with white space; line=' Accept-Charset  :   ISO-8859-1,utf-8;q=0.7,*;q=0.7 '",
             HTTP_VIOLATION, 2,
         },
-
         {NULL, NULL, NULL, NULL, 1}
 };
 

@@ -67,6 +67,34 @@ static const gchar *smuggle_headers[] =
     "Proxy-Authorization"  /* -"- */
   };
 
+class HeaderParser: LineParser {
+public:
+    HeaderParser(HttpProxy* proxy, ZEndpoint side);
+    gboolean fetchall();
+    void newLine(const gchar* line, gint bufferLength) override;
+    ~HeaderParser();
+private:
+    enum HttpHeaderStatus {
+        normalLine,
+        lastLine,
+        skipLine,
+        continuationLine
+    };
+    ZEndpoint side;
+    HttpProxy *self;
+    HttpHeaders *headers;
+    guint count;
+    HttpHeader *last_hdr;
+    HttpHeader *newHeader;
+    const char* WHITESPACE = " \t";
+    const char* BLACKLIST="()<>@,;:\\\"/[]?={} \t";
+    GString *name=NULL;
+    GString *value=NULL;
+    HttpHeaderStatus http_fetch_one_header_line ();
+    HttpHeaderStatus http_header_parse_one_line ();
+    HttpHeader* http_initial_create_header ();
+};
+
 gboolean
 http_header_equal(gconstpointer k1, gconstpointer k2)
 {
@@ -621,101 +649,25 @@ http_filter_headers(HttpProxy *self, ZEndpoint side, HttpHeaderFilter filter)
   z_proxy_return(self, TRUE);
 }
 
-
-enum HttpHeaderStatus {
-    normalLine,
-    lastLine,
-    skipLine,
-    continuationLine
-};
-
-HttpHeaderStatus http_header_parse_one_line (HttpProxy* self, HttpHeader* last_hdr, HttpHeader *& newHeader,
-                                             gchar* line,gsize line_length)
-{
-    gchar *colon, c;
-    guint name_len;
-    gchar* value;
-
-    if (line_length == 0)
-        return lastLine;
-
-    if (*line == ' ' || *line == '\t')
-    {
-        while (line_length && (*line == ' ' || *line == '\t'))
-        {
-            line++;
-            line_length--;
-        }
-        if (last_hdr) {
-            g_string_append_len (last_hdr->value, line, line_length);
-            return continuationLine;
-        }
-        else
-            throw new ParserException (FIRST_HEADER_STARTS_WITH_WHITE_SPACE, line, line_length);
-    }
-    name_len = 0;
-    c = line[name_len];
-    while (name_len < line_length
-            && !(c == '(' || c == ')' || c == '<' || c == '>' || c == '@' || c == ',' || c == ';' || c == ':' || c == '\\' || c == '"'
-                    || c == '/' || c == '[' || c == ']' || c == '?' || c == '=' || c == '{' || c == '}' || c == ' ' || c == '\t'))
-    {
-        name_len++;
-        c = line[name_len];
-    }
-    for (colon = &line[name_len]; (guint) ((colon - line)) < line_length && *colon == ' ' && *colon != ':'; colon++)
-        ;
-
-    if ((colon - line) >= line_length || *colon != ':')
-    {
-        ParserException* e = new ParserException (INVALID_HTTP_HEADER, line, line_length);
-        if (self->strict_header_checking)
-            throw e;
-        else
-            z_proxy_log(self, HTTP_VIOLATION, 2, "%s", e->what ());
-        return skipLine;
-    }
-    /* strip trailing white space */
-    while (line_length > 0 && line[line_length - 1] == ' ')
-        line_length--;
-    for (value = colon + 1; (guint) ((value - line)) < line_length && *value == ' '; value++)
-        ;
-
-    newHeader = http_initial_create_header (line, name_len, &line[line_length] - value, value);
-    return normalLine;
+HeaderParser::HeaderParser(HttpProxy* proxy, ZEndpoint side) {
+    this->self = proxy;
+    this->side = side;
+    headers = &(proxy->headers[side]);
+    count = 0;
+    last_hdr = NULL;
+    newHeader = NULL;
 }
 
-HttpHeaderStatus http_fetch_one_header_line (HttpProxy* self, ZEndpoint side, HttpHeaders* headers, HttpHeader*& last_hdr, guint& count)
-{
-    gchar* line;
-    gsize line_length;
-    GIOStatus res;
-    HttpHeaderStatus state;
-    HttpHeader *h;
-    res = z_stream_line_get (self->super.endpoints[side], &line, &line_length, NULL);
-    if (res != G_IO_STATUS_NORMAL)
-    {
-        if (res == G_IO_STATUS_EOF && side == EP_SERVER && self->permit_null_response)
-            return lastLine;
-
-        throw new ParserException (ERROR_READING_FROM_PEER_WHILE_FETCHING_HEADERS, line, line_length);
+HeaderParser::~HeaderParser() {
+    if (name) {
+    	g_string_free(name, TRUE);
     }
-    state = http_header_parse_one_line (self, last_hdr, h, line, line_length);
-    count++;
-    if (normalLine == state)
-        last_hdr=http_finalize_header (headers, h);
-
-    if (count > self->max_header_lines)
-        throw new ParserException (line, line_length, TOO_MANY_HEADER_LINES_MAX_HEADER_LINES_D, self->max_header_lines);
-    return state;
+    if (value) {
+    	g_string_free(value, TRUE);
+    }
 }
 
-gboolean
-http_fetch_headers(HttpProxy *self, ZEndpoint side)
-{
-    HttpHeaders *headers = &self->headers[side];
-    guint count = 0;
-    HttpHeader *last_hdr = NULL;
-
+gboolean HeaderParser::fetchall() {
     z_proxy_enter(self);
     http_clear_headers(headers);
 
@@ -723,7 +675,7 @@ http_fetch_headers(HttpProxy *self, ZEndpoint side)
         z_proxy_return(self, TRUE);
 
     try {
-        while (lastLine != http_fetch_one_header_line (self, side, headers, last_hdr, count));
+        while (lastLine != http_fetch_one_header_line ());
     } catch(ParserException *e) {
         z_proxy_log(self, HTTP_VIOLATION, 2, "%s", e->what());
         z_proxy_return(self, FALSE);
@@ -732,6 +684,100 @@ http_fetch_headers(HttpProxy *self, ZEndpoint side)
     /*  g_string_append(headers, "\r\n"); */
     http_log_headers(self, side, "prefilter");
     z_proxy_return(self, TRUE);
+}
+
+void HeaderParser::newLine(
+        const gchar* line,
+        gint bufferLength) {
+    LineParser::newLine(line, bufferLength);
+    if (name) {
+    	g_string_free(name, TRUE);
+    	name=NULL;
+    }
+    if (value) {
+    	g_string_free(value, TRUE);
+    	value=NULL;
+    }
+}
+
+HeaderParser::HttpHeaderStatus HeaderParser::http_fetch_one_header_line ()
+{
+	gchar* line;
+	gsize line_length;
+	GIOStatus res;
+	HttpHeaderStatus state;
+	res = z_stream_line_get (self->super.endpoints[side], &line, &line_length, NULL);
+	if (res != G_IO_STATUS_NORMAL)
+	{
+		if (res == G_IO_STATUS_EOF && side == EP_SERVER && self->permit_null_response)
+			return lastLine;
+
+		throw new ParserException (ERROR_READING_FROM_PEER_WHILE_FETCHING_HEADERS, line, line_length);
+	}
+	newLine(line, line_length);
+	state = http_header_parse_one_line ();
+	count++;
+	if (normalLine == state) {
+		newHeader = http_initial_create_header();
+		last_hdr=http_finalize_header (headers, newHeader);
+	}
+	else if (continuationLine == state)
+		g_string_append(last_hdr->value, value->str);
+
+	if (count > self->max_header_lines)
+		throw new ParserException (line, line_length, TOO_MANY_HEADER_LINES_MAX_HEADER_LINES_D, self->max_header_lines);
+	return state;
+}
+
+HeaderParser::HttpHeaderStatus HeaderParser::http_header_parse_one_line ()
+{
+	if (isEmpty())
+		return lastLine;
+
+	if (isAt(WHITESPACE))
+	{
+		if (!last_hdr)
+			throw new ParserException (FIRST_HEADER_STARTS_WITH_WHITE_SPACE,  origBuffer.line, origBuffer.bufferLength);
+		skipChars (WHITESPACE);
+		value = makeGString ();
+		return continuationLine;
+	}
+
+	name = toGStringUntilDelimiter(BLACKLIST);
+
+	skipChars(' ');
+	if (!isAt(':'))
+	{
+		ParserException* e = new ParserException (INVALID_HTTP_HEADER, origBuffer.line, origBuffer.bufferLength);
+		if (self->strict_header_checking)
+			throw e;
+		else
+			z_proxy_log(self, HTTP_VIOLATION, 2, "%s", e->what ());
+		return skipLine;
+	}
+	skipOne ();
+
+	value = stripToGString();
+	return normalLine;
+}
+
+HttpHeader* HeaderParser::http_initial_create_header ()
+{
+	HttpHeader *h;
+	h = g_new0(HttpHeader, 1);
+	h->name = name;
+	name=NULL;
+	h->value = value;
+	value=NULL;
+	h->present = TRUE;
+	return h;
+}
+
+gboolean
+http_fetch_headers(HttpProxy *self, ZEndpoint side)
+{
+    HeaderParser parser = HeaderParser(self,side);
+    return parser.fetchall();
 }
 
 gboolean

@@ -9,6 +9,10 @@ public:
     LineParser(
             const gchar* line,
             gint bufferLength);
+    virtual ~LineParser();
+    virtual void newLine(
+            const gchar* line,
+            gint bufferLength);
     void parse_until_space_to_GString(GString* outputString,
             const char* noSpaceAfterMsg, const char* zeroLengthMsg,
             const char* tooLongMsg, size_t maxLength);
@@ -19,11 +23,26 @@ public:
             const char* noSpaceAfterMsg, const char* zeroLengthMsg,
             const char* tooLongMsg, size_t maxLength);
     void parse_until_spaces_end(const char *noStringReached);
+    gboolean isAt(const char *candidates);
+    gboolean isAt(const char candidate);
+    void skipChars (const char* candidates);
+    void skipChars (char candidate);
+    void skipUntil (const char* delimiters);
+    void skipOne ();
+    void stripEnd ();
+    GString * makeGString(const char* prt, gsize stringLength);
+    GString * makeGString();
+	GString* toGStringUntilDelimiter(const char* delimiter);
+	GString* stripToGString();
+	gboolean isEmpty();
+
+protected:
+    LineParser();
+    OrigBuffer origBuffer;
 private:
-    gint length;
+    gsize length;
     const char * stringAt;
     const char * spaceAt;
-    OrigBuffer origBuffer;
     void _parseToSpace(
             const char* noSpaceAfterMsg,
             const char* zeroLengthMsg,
