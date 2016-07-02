@@ -40,24 +40,28 @@ new_proxy ()
   return proxyFake;
 }
 
-BOOST_AUTO_TEST_CASE (test_split_http_request)
+GString prepareCanariedGString() {
+	GString testGString;
+	char testPlainString[64];
+	for (int i = 0; i < 64; i++) {
+		testPlainString[i] = 'b';
+	}
+	testGString.str = testPlainString;
+	testGString.allocated_len = 8;
+	testGString.len = 3;
+	strcpy(testPlainString, "GET");
+	return testGString;
+}
+
+BOOST_AUTO_TEST_CASE(test_split_http_request_does_not_have_the_off_by_one_error)
 {
   const char *line = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   HttpProxy *proxyFake = new_proxy ();
-  GString testGString;
-  char testPlainString[64];
-  for (int i = 0; i < 64; i++)
-    {
-      testPlainString[i] = 'b';
-    }
-  testGString.str = testPlainString;
-  testGString.allocated_len = 8;
-  testGString.len = 3;
-  strcpy (testPlainString, "GET");
+  GString testGString = prepareCanariedGString();
   proxyFake->request_method = &testGString;
 
   http_split_request (proxyFake, line, 33);
-  BOOST_CHECK_MESSAGE (testPlainString[8] == 'b', "buffer overrun");
+  BOOST_CHECK_MESSAGE (testGString.str[8] == 'b', "buffer overrun");
 }
 
 typedef struct
@@ -90,7 +94,7 @@ TestCase validTestCases[] = {
   {NULL, NULL, NULL, NULL}
 };
 
-BOOST_AUTO_TEST_CASE (test_correct_line_is_parsed_correctly)
+BOOST_AUTO_TEST_CASE (test_correct_http_request_line_is_parsed_correctly)
 {
   z_log_init ("zorp test", 3);
   z_log_change_logspec ("http.*:6", NULL);
@@ -217,7 +221,7 @@ FailingTestCase failingCases[] = {
   {NULL, NULL, NULL, 9}
 };
 
-BOOST_AUTO_TEST_CASE (test_incorrect_line_causes_error_return)
+BOOST_AUTO_TEST_CASE (test_incorrect_http_reqest_line_causes_error_return)
 {
   testErrorCases (http_split_request
 		  (proxyFake, inputLine, strlen (inputLine)));

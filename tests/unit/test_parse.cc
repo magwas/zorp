@@ -26,10 +26,14 @@
 #include <boost/test/unit_test.hpp>
 
 int
-test_foo (ParseState * parseState, const char *line)
+test_parsing_function_throwing_exception ()
 {
-  parse_start (parseState, line, strlen (line));
-  parse_until_spaces_end ("no string reached", parseState);
+  const char *line = " ";
+  ParseState parseState;
+  parseState.origBuffer.line = "hehe";
+  parseState.origBuffer.bufferLength = 3;
+  parse_start (&parseState, line, strlen (line));
+  parse_until_spaces_end ("no string reached", &parseState);
   return TRUE;
 }
 
@@ -48,14 +52,9 @@ test_foo (ParseState * parseState, const char *line)
 
 BOOST_AUTO_TEST_CASE (test_parser_error_throws_loggable_exception)
 {
-  ParseState parseState;
-  const char *line = " ";
 
   last_log_result.msg = "no log arrived";
-  parseState.origBuffer.line = "hehe";
-  parseState.origBuffer.bufferLength = 3;
-
-  EXCEPT_EXCEPTION (test_foo (&parseState, line),
+  EXCEPT_EXCEPTION (test_parsing_function_throwing_exception (),
 		    "no string reached; line=' '");
 }
 

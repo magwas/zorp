@@ -186,29 +186,7 @@ public:
     z_log(((ZProxy *) self)->session_id, class_, level, format,  ##args);    \
   } while (0)
 
-#ifdef G_OS_WIN32
-  #define LOG_MSG(format) format
-#else
-
-  #define LOG_MSG(format) (format)
-
-#define z_log2(session_id, class_, level, format, args...) \
-  do \
-    { \
-      if (z_log_enabled(class_, level)) \
-      /*NOLOG*/ \
-        z_llog(class_, level, format, z_log_session_id(session_id) , ##args); \
-    } \
-  while (0)
-#endif
-
-#define z_proxy_log2(self, class_, level, format, args...)         \
-  do {                                    \
-    z_object_check_compatible((ZObject *) self, Z_CLASS(ZProxy));    \
-    /*NOLOG*/                                 \
-    z_log2(((ZProxy *) self)->session_id, class_, level, format,  ##args);    \
-  } while (0)
-
+#define LOG_MSG(format) (format)
 
 #define z_proxy_log_data_dump(self, class_, level, buf, len)             \
   do {                                    \

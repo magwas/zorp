@@ -73,7 +73,7 @@ TestCase validTestCases[] = {
   {NULL, NULL, NULL, 0, NULL}
 };
 
-BOOST_AUTO_TEST_CASE (test_correct_response_is_parsed_correctly)
+BOOST_AUTO_TEST_CASE (test_correct_http_response_line_is_parsed_correctly)
 {
   int n = 0;
   do
@@ -169,7 +169,7 @@ FailingTestCase failingCases[] = {
   {NULL, NULL, NULL, 0}
 };
 
-BOOST_AUTO_TEST_CASE (test_incorrect_response_causes_error_return)
+BOOST_AUTO_TEST_CASE (test_incorrect_http_response_line_causes_error_return)
 {
   testErrorCases (http_split_response
 		  (proxyFake, inputLine, strlen (inputLine)));
