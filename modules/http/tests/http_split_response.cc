@@ -22,7 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../http.h"
-#include "testutil.h"
+#include "../../../tests/unit/testutil.h"
 
 
 HttpProxy* new_proxy() {

@@ -3,7 +3,7 @@ CPPFLAGS = @MODULES_CPPFLAGS@ -DBOOST_TEST_DYN_LINK=1 -I$(top_builddir)/lib/test
 
 check_PROGRAMS = http_parse_url http_canon_url http_validation http_split_response
 
-LDADD = ../libhttp.la ../httpmisc.lo ../messages.lo $(top_builddir)/lib/tests/libtestutil.la -lboost_unit_test_framework
+LDADD = ../libhttp.la ../httpmisc.lo ../messages.lo $(top_builddir)/tests/unit/libtestutil.la -lboost_unit_test_framework
 
 AM_LDFLAGS= -Wl,--wrap=z_llog
 

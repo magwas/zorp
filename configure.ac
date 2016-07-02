@@ -492,7 +492,6 @@ doc/Makefile
 doc/examples/Makefile
 doc/man/Makefile
 lib/Makefile
-lib/tests/Makefile
 lib/zorp/Makefile
 libproxy/Makefile
 libproxy/zorp/Makefile
