@@ -31,7 +31,7 @@ test_parsing_function_throwing_exception ()
   const char *line = " ";
   ParseState parseState;
   parseState.origBuffer.line = "hehe";
-  parseState.origBuffer.bufferLength = 3;
+  parseState.origBuffer.bufferLength = strlen(parseState.origBuffer.line)-1;
   parse_start (&parseState, line, strlen (line));
   parse_until_spaces_end ("no string reached", &parseState);
   return TRUE;
@@ -66,11 +66,12 @@ BOOST_AUTO_TEST_CASE
   (parser_correctly_parses_space_token_space_spaceend_to_Gstring)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token  a", 11);
+  const char * testString = "   token  a";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (noSpaces, &parseState);
   parse_until_space_to_GString (&parseState, outputString,
-				noSpaceAfter, zeroLength, tooLong, 10);
+				noSpaceAfter, zeroLength, tooLong, strlen(testString));
   parse_until_spaces_end (noSpaces, &parseState);
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
@@ -78,11 +79,12 @@ BOOST_AUTO_TEST_CASE
 BOOST_AUTO_TEST_CASE (parser_correctly_parses_space_token_space_to_Gstring)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token  ", 10);
+  const char * testString = "   token  ";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (noSpaces, &parseState);
   parse_until_space_to_GString (&parseState, outputString,
-				noSpaceAfter, zeroLength, tooLong, 10);
+				noSpaceAfter, zeroLength, tooLong, strlen(testString));
   parse_until_spaces_end (NULL, &parseState);
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
@@ -91,11 +93,12 @@ BOOST_AUTO_TEST_CASE
   (parser_correctly_parses_space_token_optional_space_to_Gstring_no_space_case)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token", 8);
+  const char * testString = "   token";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (noSpaces, &parseState);
   parse_until_space_to_GString (&parseState, outputString,
-				NULL, zeroLength, tooLong, 10);
+				NULL, zeroLength, tooLong, strlen(testString));
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
 
@@ -103,11 +106,12 @@ BOOST_AUTO_TEST_CASE
   (parser_correctly_parses_optional_space_token_to_Gstring_nospace_case)
 {
   ParseState parseState;
-  parse_start (&parseState, "token", 5);
+  const char * testString = "token";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (NULL, &parseState);
   parse_until_space_to_GString (&parseState, outputString,
-				NULL, zeroLength, tooLong, 10);
+				NULL, zeroLength, tooLong, strlen(testString));
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
 
@@ -115,21 +119,23 @@ BOOST_AUTO_TEST_CASE
   (parser_correctly_parses_optional_space_token_to_Gstring_space_case)
 {
   ParseState parseState;
-  parse_start (&parseState, " token", 6);
+  const char * testString = " token";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (NULL, &parseState);
   parse_until_space_to_GString (&parseState, outputString,
-				NULL, zeroLength, tooLong, 10);
+				NULL, zeroLength, tooLong, strlen(testString));
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
 
 BOOST_AUTO_TEST_CASE (parser_correctly_parses_token_space_to_gstring)
 {
   ParseState parseState;
-  parse_start (&parseState, "token  a", 10);
+  const char * testString = "token  a";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_space_to_GString (&parseState, outputString,
-				noSpaceAfter, zeroLength, tooLong, 10);
+				noSpaceAfter, zeroLength, tooLong, strlen(testString));
   parse_until_spaces_end (noSpaces, &parseState);
   BOOST_CHECK (TRUE == g_string_equal (outputString, g_string_new ("token")));
 }
@@ -138,11 +144,12 @@ BOOST_AUTO_TEST_CASE
   (parser_correctly_parses_space_token_space_spaceend_to_gchar)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token  a", 11);
+  const char * testString = "   token  a";
+  parse_start (&parseState, testString, strlen(testString));
   gchar outputString[10];
   parse_until_spaces_end (noSpaces, &parseState);
   parse_until_space_to_gchar (&parseState, outputString,
-			      noSpaceAfter, zeroLength, tooLong, 10);
+			      noSpaceAfter, zeroLength, tooLong, strlen(testString));
   parse_until_spaces_end (noSpaces, &parseState);
   BOOST_CHECK (0 == strcmp (outputString, "token"));
 }
@@ -150,10 +157,11 @@ BOOST_AUTO_TEST_CASE
 BOOST_AUTO_TEST_CASE (parser_correctly_parses_token_space_to_gchar)
 {
   ParseState parseState;
-  parse_start (&parseState, "token  a", 10);
+  const char * testString = "token  a";
+  parse_start (&parseState, testString, strlen(testString));
   gchar outputString[10];
   parse_until_space_to_gchar (&parseState, outputString,
-			      noSpaceAfter, zeroLength, tooLong, 10);
+			      noSpaceAfter, zeroLength, tooLong, strlen(testString));
   parse_until_spaces_end (noSpaces, &parseState);
   BOOST_CHECK (0 == strcmp (outputString, "token"));
 }
@@ -162,11 +170,12 @@ BOOST_AUTO_TEST_CASE
   (parse_until_space_to_gchar_throws_exception_with_noSpaceAfterMsg_if_no_space_after)
 {
   ParseState parseState;
-  parse_start (&parseState, "token", 5);
+  const char * testString = "token";
+  parse_start (&parseState, testString, strlen(testString));
   gchar outputString[10];
   EXCEPT_EXCEPTION (parse_until_space_to_gchar (&parseState, outputString,
 						noSpaceAfter, zeroLength,
-						tooLong, 10),
+						tooLong, strlen(testString)),
 		    "no space after; line='token'");
 }
 
@@ -174,11 +183,12 @@ BOOST_AUTO_TEST_CASE
   (parse_until_space_to_gchar_throws_exception_with_zeroLengthMsg_if_line_starts_with_space)
 {
   ParseState parseState;
-  parse_start (&parseState, " token", 10);
+  const char * testString = " token";
+  parse_start (&parseState, testString, strlen(testString));
   gchar outputString[10];
   EXCEPT_EXCEPTION (parse_until_space_to_gchar (&parseState, outputString,
 						noSpaceAfter, zeroLength,
-						tooLong, 10),
+						tooLong, strlen(testString)),
 		    "zero length; line=' token'");
 }
 
@@ -186,11 +196,12 @@ BOOST_AUTO_TEST_CASE
   (parse_until_space_to_gchar_throws_exception_with_tooLongMsg_if_segment_is_too_long)
 {
   ParseState parseState;
-  parse_start (&parseState, "token", 10);
+  const char * testString = "token";
+  parse_start (&parseState, testString, strlen(testString));
   gchar outputString[10];
   EXCEPT_EXCEPTION (parse_until_space_to_gchar (&parseState, outputString,
 						noSpaceAfter, zeroLength,
-						tooLong, 3),
+						tooLong, strlen(testString)-1),
 		    "no space after; line='token'");
 }
 
@@ -199,7 +210,8 @@ BOOST_AUTO_TEST_CASE
   (parse_until_spaces_end_throws_exception_with_noStringReached_if_there_are_only_spaces)
 {
   ParseState parseState;
-  parse_start (&parseState, "   ", 3);
+  const char * testString = "   ";
+  parse_start (&parseState, testString, strlen(testString));
   EXCEPT_EXCEPTION (parse_until_spaces_end (noSpaces, &parseState),
 		    "no spaces; line='   '");
 }
@@ -208,15 +220,17 @@ BOOST_AUTO_TEST_CASE
   (parse_until_spaces_end_throws_exception_with_noStringReached_if_more_spaces_than_length)
 {
   ParseState parseState;
-  parse_start (&parseState, "     ", 3);
+  const char * testString = "     ";
+  parse_start (&parseState, testString, strlen(testString)-1);
   EXCEPT_EXCEPTION (parse_until_spaces_end (noSpaces, &parseState),
-		    "no spaces; line='   '");
+		    "no spaces; line='    '");
 }
 
 BOOST_AUTO_TEST_CASE (parser_correctly_parses_space_token_to_Gstring)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token", 8);
+  const char * testString = "   token";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   parse_until_spaces_end (noSpaces, &parseState);
   parse_until_end_to_GString (&parseState, outputString, zeroLength, 10);
@@ -227,9 +241,10 @@ BOOST_AUTO_TEST_CASE
   (parse_until_end_to_GString_returns_FALSE_and_sets_zeroLengthMsg_if_line_starts_with_space)
 {
   ParseState parseState;
-  parse_start (&parseState, "   token", 8);
+  const char * testString = "   token";
+  parse_start (&parseState, testString, strlen(testString));
   GString *outputString = g_string_new (NULL);
   EXCEPT_EXCEPTION (parse_until_end_to_GString (&parseState, outputString,
-						zeroLength, 10),
+						zeroLength, strlen(testString)),
 		    "zero length; line='   token'");
 }

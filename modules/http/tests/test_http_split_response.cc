@@ -36,7 +36,7 @@ new_proxy ()
   proxyFake->request_url = g_string_new (NULL);
   proxyFake->request_method = g_string_new (NULL);
   proxyFake->response_msg = g_string_new (NULL);
-  proxyFake->max_url_length = 2048;
+  proxyFake->max_url_length = TEST_MAX_URL_LENGTH;
 
   return proxyFake;
 }

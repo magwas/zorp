@@ -233,6 +233,9 @@ typedef struct _HttpElementInfo
   gssize max_len; /* only used for headers */
 } HttpElementInfo;
 
+const int HTTP_REQUEST_VERSION_BUFFER_LENGTH = 16;
+
+
 /* This structure represents an HTTP proxy */
 struct _HttpProxy
 {
@@ -303,7 +306,7 @@ struct _HttpProxy
   HttpURL request_url_parts;
 
   /* HTTP version as presented in the client request */
-  gchar request_version[16];
+  gchar request_version[HTTP_REQUEST_VERSION_BUFFER_LENGTH];
 
   /* proxy or server type request was received, HTTP_REQ_PROXY or HTTP_REQ_SERVER */
   guint request_type;

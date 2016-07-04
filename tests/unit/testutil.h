@@ -18,7 +18,10 @@
  *
  ***************************************************************************/
 
-#define LOG_RESULT_LENGTH 200
+namespace {
+  const int TEST_MAX_URL_LENGTH = 2048;
+  const int LOG_RESULT_LENGTH = 200;
+}
 
 typedef struct
 {

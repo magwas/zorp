@@ -1003,7 +1003,7 @@ http_split_request(HttpProxy *self, const gchar *line, gint bufferLength)
 
       parse_until_space_to_gchar(pParseState, self->request_version,
                   NULL, msg_http_version_missing,
-                msg_http_version_too_long, sizeof(self->request_version)-1);
+                msg_http_version_too_long, HTTP_REQUEST_VERSION_BUFFER_LENGTH-1);
   } catch(std::exception &e) {
       z_proxy_log(self, HTTP_VIOLATION, 1, "%s", e.what());
       return FALSE;

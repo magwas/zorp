@@ -35,22 +35,28 @@ new_proxy ()
 
   proxyFake->request_url = g_string_new (NULL);
   proxyFake->request_method = g_string_new (NULL);
-  proxyFake->max_url_length = 2048;
+  proxyFake->max_url_length = TEST_MAX_URL_LENGTH;
 
   return proxyFake;
 }
 
 GString prepareCanariedGString() {
+	const int CANARIED_STRING_LENGTH = 64;
+	const int CANARIED_STRING_ALLOCATED_LENGTH = 8;
 	GString testGString;
-	char testPlainString[64];
-	for (int i = 0; i < 64; i++) {
-		testPlainString[i] = 'b';
+	char *testPlainString = (char *) malloc(CANARIED_STRING_LENGTH);
+	memset(testPlainString,'b',CANARIED_STRING_LENGTH);
+	for (int i = 0; i < CANARIED_STRING_LENGTH; i++) {
+		//testPlainString[i] = 'b';
+		printf("%dth is %c\n",i,testPlainString[i]);
 	}
 	testGString.str = testPlainString;
-	testGString.allocated_len = 8;
-	testGString.len = 3;
-	strcpy(testPlainString, "GET");
+	testGString.allocated_len = CANARIED_STRING_ALLOCATED_LENGTH;
 	return testGString;
+}
+
+void destructCanariedGString(GString testGString) {
+	free(testGString.str);
 }
 
 BOOST_AUTO_TEST_CASE(test_split_http_request_does_not_have_the_off_by_one_error)
@@ -62,6 +68,7 @@ BOOST_AUTO_TEST_CASE(test_split_http_request_does_not_have_the_off_by_one_error)
 
   http_split_request (proxyFake, line, 33);
   BOOST_CHECK_MESSAGE (testGString.str[8] == 'b', "buffer overrun");
+  destructCanariedGString(testGString);
 }
 
 typedef struct
